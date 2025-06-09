@@ -1,0 +1,7 @@
+# Ignorar la carpeta de subidas de archivos
+uploads/
+
+# Ignorar el archivo de variables de entorno
+.env
+
+node_modules
