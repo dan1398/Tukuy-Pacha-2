@@ -4,6 +4,7 @@ import PersonalDashboard from '@/views/PersonalDashboard.vue'
 import Login from '@/views/Login.vue'
 import Registrar from '@/views/Registrar.vue'
 import NuevoParticipante from '@/views/NuevoParticipante.vue'
+import EditarParticipante from '@/views/EditarParticipante.vue'
 
 
 const router = createRouter({
@@ -42,6 +43,13 @@ const router = createRouter({
           name: 'nuevoParticipante',
           component: NuevoParticipante,
           meta: { requiresAuth: true }
+        },
+        {
+            path: '/editar-participante/:id_participante',
+            name: 'editarParticipante',
+            component: EditarParticipante,
+            props: true, // Esto pasa el ':id_participante' como una prop al componente
+            meta: { requiresAuth: true }
         }
     ]
 })

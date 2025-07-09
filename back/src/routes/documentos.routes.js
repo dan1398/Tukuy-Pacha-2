@@ -1,6 +1,6 @@
 import express from 'express'
-import { getDocumentos, uploadDocumento, deleteDocumento } from '../controllers/documentos.controller.js'
-import upload from '../middleware/upload.js'
+import { getDocumentos, uploadDocumento, deleteDocumento, updateDocumento } from '../controllers/documentos.controller.js' // <--- IMPORTA updateDocumento
+import upload from '../middleware/upload.js' // Multer configurado
 import pool from '../db.js'
 import path from 'path'
 import fs from 'fs'
@@ -11,8 +11,10 @@ const router = express.Router()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const uploadsDir = path.resolve('uploads')
+// Ruta absoluta al directorio 'uploads'. Asegúrate de que esta coincida con la de multer en 'middleware/upload.js'
+const uploadsDir = path.resolve(__dirname, '../uploads') 
 
+// Ruta para obtener documentos (con o sin participanteId)
 router.get('/', async (req, res) => {
   const { participanteId } = req.query
   try {
@@ -39,6 +41,10 @@ router.get('/', async (req, res) => {
 })
   
 router.post('/', upload.single('archivo'), uploadDocumento)
+
+// --- AÑADE ESTA RUTA PUT ---
+router.put('/:id', upload.single('archivo'), updateDocumento) // <-- Esta es la línea que faltaba
+
 router.delete('/:id', deleteDocumento)
 
 router.get('/download/:filename', (req, res) => {
@@ -51,4 +57,5 @@ router.get('/download/:filename', (req, res) => {
     res.status(404).send('Archivo no encontrado')
   }
 })
+
 export default router
