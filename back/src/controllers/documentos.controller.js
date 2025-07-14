@@ -1,150 +1,179 @@
 import pool from '../db.js';
-import fs from 'fs'; // Importar fs para manejar archivos
-import path from 'path'; // Importar path para manejar rutas de archivos
+import fs from 'fs';
+import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const uploadsDir = path.resolve(__dirname, '../uploads'); // Ruta correcta para 'uploads'
+const uploadsDir = path.resolve(__dirname, '..', '..', 'uploads'); // Ruta a la carpeta 'uploads'
+
+console.log('Controlador de documentos está utilizando uploadsDir:', uploadsDir);
 
 export const getDocumentos = async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM Documento');
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ mensaje: 'Error al obtener documentos', error: err.message });
-  }
+    try {
+        const { participanteId } = req.query;
+        let query = 'SELECT d.*, p.nombre AS nombre_participante FROM Documento d LEFT JOIN Participante p ON d.id_participante = p.id_participante';
+        let params = [];
+
+        if (participanteId) {
+            query += ' WHERE d.id_participante = ?';
+            params.push(participanteId);
+        }
+
+        const [rows] = await pool.query(query, params);
+        res.json(rows);
+    } catch (err) {
+        console.error('❌ Error al obtener documentos:', err);
+        res.status(500).json({ mensaje: 'Error al obtener documentos', error: err.message });
+    }
 };
 
 export const uploadDocumento = async (req, res) => {
-  console.log('→ Documento req.body (POST):', req.body);
-  console.log('→ Documento req.file (POST):', req.file);
+    console.log('→ Documento req.body (POST):', req.body);
+    console.log('→ Documento req.file (POST):', req.file);
 
-  const { tipo_documento, id_usuario, id_participante } = req.body;
-  const archivo = req.file;
+    const { tipo_documento, id_usuario, id_participante } = req.body;
+    const archivo = req.file;
 
-  if (!archivo) {
-    return res.status(400).json({ mensaje: 'No se subió ningún archivo' });
-  }
+    if (!archivo) {
+        return res.status(400).json({ mensaje: 'No se subió ningún archivo' });
+    }
 
-  try {
-    const filename = archivo.filename; // Nombre del archivo guardado por Multer
+    try {
+        const filenameInServer = archivo.filename;
 
-    const [result] = await pool.query(
-      `INSERT INTO Documento 
-         (nombre_archivo, tipo_documento, fecha_subida, ruta_archivo, id_usuario, id_participante)
-         VALUES (?, ?, NOW(), ?, ?, ?)`,
-      [
-        archivo.originalname, // Nombre original del archivo
-        tipo_documento,
-        filename,             // Nombre del archivo en el servidor (generado por Multer)
-        id_usuario,
-        id_participante
-      ]
-    );
+        const [result] = await pool.query(
+            `INSERT INTO Documento
+             (nombre_archivo, tipo_documento, fecha_subida, ruta_archivo, id_usuario, id_participante)
+             VALUES (?, ?, NOW(), ?, ?, ?)`,
+            [
+                archivo.originalname,
+                tipo_documento,
+                filenameInServer,
+                id_usuario,
+                id_participante
+            ]
+        );
 
-    res.status(201).json({ mensaje: 'Archivo subido exitosamente', id_documento: result.insertId });
-  } catch (err) {
-    console.error('❌ Error al guardar documento:', err);
-    res.status(500).json({ mensaje: 'Error al guardar documento', error: err.message });
-  }
+        res.status(201).json({
+            mensaje: 'Archivo subido exitosamente',
+            id_documento: result.insertId,
+            filename: filenameInServer
+        });
+    } catch (err) {
+        console.error('❌ Error al guardar documento:', err);
+        res.status(500).json({ mensaje: 'Error al guardar documento', error: err.message });
+    }
 };
 
-// --- NUEVA FUNCIÓN PARA ACTUALIZAR UN DOCUMENTO ---
 export const updateDocumento = async (req, res) => {
-  const { id } = req.params;
-  const { tipo_documento, id_usuario, id_participante } = req.body;
-  const archivo = req.file; // El nuevo archivo si se subió uno
+    const { id } = req.params;
+    const { tipo_documento, id_usuario, id_participante } = req.body;
+    const archivo = req.file;
 
-  console.log(`→ Actualizando Documento ID: ${id}`);
-  console.log('  req.body (PUT):', req.body);
-  console.log('  req.file (PUT):', archivo);
+    console.log(`→ Actualizando Documento ID: ${id}`);
+    console.log('   req.body (PUT):', req.body);
+    console.log('   req.file (PUT):', archivo);
 
-  try {
-    // 1. Obtener el documento existente para ver su ruta de archivo anterior
-    const [existingDocRows] = await pool.query('SELECT ruta_archivo FROM Documento WHERE id_documento = ?', [id]);
+    try {
+        const [existingDocRows] = await pool.query('SELECT ruta_archivo FROM Documento WHERE id_documento = ?', [id]);
 
-    if (existingDocRows.length === 0) {
-      return res.status(404).json({ mensaje: 'Documento no encontrado.' });
-    }
-
-    const oldFilePath = existingDocRows[0].ruta_archivo; // Nombre del archivo antiguo en /uploads
-
-    let query = 'UPDATE Documento SET tipo_documento = ?, id_usuario = ?, id_participante = ?';
-    let params = [tipo_documento, id_usuario, id_participante];
-
-    if (archivo) { // Si se subió un nuevo archivo
-      query += ', nombre_archivo = ?, ruta_archivo = ?';
-      params.push(archivo.originalname, archivo.filename);
-
-      // Eliminar el archivo antiguo si existe y es diferente al nuevo
-      if (oldFilePath && oldFilePath !== archivo.filename) { // Evita borrar el mismo archivo si por alguna razón el nombre no cambia (raro con Date.now)
-        const fullOldPath = path.join(uploadsDir, oldFilePath);
-        if (fs.existsSync(fullOldPath)) {
-          fs.unlinkSync(fullOldPath);
-          console.log(`  Archivo antiguo eliminado: ${fullOldPath}`);
+        if (existingDocRows.length === 0) {
+            return res.status(404).json({ mensaje: 'Documento no encontrado.' });
         }
-      }
-    } else {
-      // Si no se subió un nuevo archivo, mantenemos el nombre y ruta existentes.
-      // Aquí podrías añadir lógica si quisieras permitir 'borrar' un archivo
-      // de un documento sin subir uno nuevo, por ejemplo, si el frontend envía una señal para eso.
-      // Por ahora, si no hay 'archivo' en la solicitud PUT, el archivo existente se mantiene.
+
+        const oldFilename = existingDocRows[0].ruta_archivo;
+
+        let query = 'UPDATE Documento SET tipo_documento = ?, id_usuario = ?, id_participante = ?';
+        let params = [tipo_documento, id_usuario, id_participante];
+
+        if (archivo) {
+            query += ', nombre_archivo = ?, ruta_archivo = ?';
+            params.push(archivo.originalname, archivo.filename);
+
+            if (oldFilename && oldFilename !== archivo.filename) {
+                const fullOldPath = path.join(uploadsDir, oldFilename);
+                if (fs.existsSync(fullOldPath)) {
+                    fs.unlinkSync(fullOldPath);
+                    console.log(`   Archivo antiguo eliminado: ${fullOldPath}`);
+                }
+            }
+        }
+
+        query += ' WHERE id_documento = ?';
+        params.push(id);
+
+        const [result] = await pool.query(query, params);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ mensaje: 'Documento no encontrado para actualizar.' });
+        }
+
+        res.status(200).json({ mensaje: 'Documento actualizado correctamente.' });
+
+    } catch (err) {
+        console.error("❌ Error al actualizar documento:", err);
+        res.status(500).json({ mensaje: 'Error interno del servidor al actualizar documento.', error: err.message });
     }
-
-    query += ' WHERE id_documento = ?';
-    params.push(id);
-
-    const [result] = await pool.query(query, params);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ mensaje: 'Documento no encontrado para actualizar.' });
-    }
-
-    res.status(200).json({ mensaje: 'Documento actualizado correctamente.' });
-
-  } catch (err) {
-    console.error("❌ Error al actualizar documento:", err);
-    res.status(500).json({ mensaje: 'Error interno del servidor al actualizar documento.', error: err.message });
-  }
 };
 
 export const deleteDocumento = async (req, res) => {
-  const { id } = req.params;
-  try {
-    // Primero, obtener la ruta del archivo físico para eliminarlo
-    const [rows] = await pool.query('SELECT ruta_archivo FROM Documento WHERE id_documento = ?', [id]);
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query('SELECT ruta_archivo FROM Documento WHERE id_documento = ?', [id]);
 
-    if (rows.length === 0) {
-      return res.status(404).json({ mensaje: 'Documento no encontrado' });
+        if (rows.length === 0) {
+            return res.status(404).json({ mensaje: 'Documento no encontrado' });
+        }
+
+        const filenameToDelete = rows[0].ruta_archivo;
+
+        await pool.query('DELETE FROM Documento WHERE id_documento = ?', [id]);
+
+        if (filenameToDelete) {
+            const filePath = path.join(uploadsDir, filenameToDelete);
+            if (fs.existsSync(filePath)) {
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error('❌ Error al eliminar archivo físico:', err);
+                    } else {
+                        console.log(`Archivo físico eliminado: ${filePath}`);
+                    }
+                });
+            } else {
+                console.warn(`Archivo físico no encontrado para eliminar: ${filePath}`);
+            }
+        }
+
+        res.json({ mensaje: 'Documento eliminado correctamente' });
+    } catch (err) {
+        console.error('❌ Error al eliminar documento:', err);
+        res.status(500).json({ mensaje: 'Error al eliminar documento', error: err.message });
+    }
+};
+
+export const downloadDocumento = (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadsDir, filename);
+
+    console.log(`Intentando descargar el archivo desde la ruta: ${filePath}`);
+
+    if (!fs.existsSync(filePath)) {
+        console.error('ERROR: Archivo NO ENCONTRADO en la ruta especificada por el servidor:', filePath);
+        return res.status(404).json({ message: 'Archivo no encontrado en el servidor.' });
     }
 
-    const ruta_archivo_fisico = rows[0].ruta_archivo;
-
-    // Eliminar el registro de la base de datos
-    await pool.query('DELETE FROM Documento WHERE id_documento = ?', [id]);
-
-    // Eliminar el archivo físico del sistema de archivos
-    if (ruta_archivo_fisico) {
-      const filePath = path.join(uploadsDir, ruta_archivo_fisico);
-      if (fs.existsSync(filePath)) {
-        fs.unlink(filePath, (err) => {
-          if (err) {
-            console.error('❌ Error al eliminar archivo físico:', err);
-            // Podrías decidir si enviar un error 500 aquí o solo loguearlo
-          } else {
-            console.log(`Archivo físico eliminado: ${filePath}`);
-          }
-        });
-      } else {
-        console.warn(`Archivo físico no encontrado para eliminar: ${filePath}`);
-      }
-    }
-
-    res.json({ mensaje: 'Documento eliminado correctamente' });
-  } catch (err) {
-    console.error('❌ Error al eliminar documento:', err);
-    res.status(500).json({ mensaje: 'Error al eliminar documento', error: err.message });
-  }
+    res.download(filePath, (err) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                console.error('Error (ENOENT): El archivo no existe en la ruta especificada durante res.download:', filePath);
+                return res.status(404).json({ message: 'Archivo no encontrado durante el proceso de descarga.' });
+            }
+            console.error('Error general al intentar descargar el archivo:', err);
+            return res.status(500).json({ message: 'Error interno del servidor al descargar el archivo.', error: err.message });
+        } else {
+            console.log(`Archivo '${filename}' enviado para descarga exitosamente.`);
+        }
+    });
 };
