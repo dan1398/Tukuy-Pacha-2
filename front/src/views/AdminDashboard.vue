@@ -24,7 +24,7 @@
         </div>
         <div class="card-body">
           <div class="input-group mb-3">
-            <input v-model="busquedaId" type="text" placeholder="Buscar por Código" class="form-control admin-input" />
+            <input v-model="busquedaId" type="text" placeholder="Buscar" class="form-control admin-input" />
             <button class="btn-tukuypacha" @click="buscarParticipante">Buscar</button>
             <button
               class="ms-2"
@@ -95,7 +95,7 @@
     </div>
 
     <div class="admin-modal-overlay" v-if="mostrarUsuarios">
-      <div class="modal-dialog modal-xl admin-modal-dialog" :class="{ 'admin-modal-expanded': editandoId !== null }">
+      <div class="modal-dialog admin-modal-dialog" :class="{ 'admin-modal-expanded': editandoId !== null }">
         <div class="modal-content admin-modal-content">
           <div class="modal-header admin-modal-header">
             <h5 class="modal-title admin-modal-title">Lista de Usuarios</h5>
@@ -105,57 +105,68 @@
             <div v-if="isLoading" class="text-center py-5">
               Cargando usuarios...
               </div>
-            <div v-else class="table-responsive">
-              <table class="table table-striped table-hover admin-table">
-                <colgroup>
-                  <col style="width: 5%;"> <col style="width: 20%;"> <col style="width: 25%;"> <col style="width: 15%;"> <col style="width: 15%;"> <col style="width: 20%;"> </colgroup>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Correo</th>
-                    <th>Contraseña</th>
-                    <th>Rol</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="u in usuarios" :key="u.id_usuario">
-                    <td>{{ u.id_usuario }}</td>
-                    <td>
-                      <input v-if="editandoId === u.id_usuario" v-model="u.nombre" class="form-control form-control-sm admin-input-table" />
-                      <span v-else>{{ u.nombre }}</span>
-                    </td>
-                    <td>
-                      <input v-if="editandoId === u.id_usuario" v-model="u.correo" class="form-control form-control-sm admin-input-table" />
-                      <span v-else>{{ u.correo }}</span>
-                    </td>
-                    <td>
-                      <input v-if="editandoId === u.id_usuario" type="text" v-model="u.contraseña" class="form-control form-control-sm admin-input-table" />
-                      <span v-else>••••••••</span>
-                    </td>
-                    <td>
-                      <select v-if="editandoId === u.id_usuario" v-model="u.rol" class="form-select form-select-sm admin-select-table">
-                        <option value="Admin">Administrador</option>
-                        <option value="Personal">Personal</option>
-                      </select>
-                      <span v-else>{{ u.rol }}</span>
-                    </td>
-                    <td>
-                      <button class="btn-sm btn-tukuypacha-outline me-1" v-if="editandoId !== u.id_usuario" @click="iniciarEdicion(u)">Editar</button>
-                      <button class="btn-sm btn-tukuypacha me-1" v-else @click="guardarCambios(u)">Guardar</button>
-
-                      <button
-                        class="btn-sm"
-                        :class="editandoId === u.id_usuario ? 'btn-tukuypacha-secondary' : 'btn-tukuypacha-danger'"
-                        @click="editandoId === u.id_usuario ? cancelarEdicion(u) : eliminarUsuarioLocal(u.id_usuario)"
-                      >
-                        {{ editandoId === u.id_usuario ? 'Cancelar' : 'Eliminar' }}
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-else>
+              <div class="table-responsive-custom">
+                <table class="table table-striped table-hover admin-table">
+                  <thead>
+                    <tr>
+                      <th class="text-center">ID</th>
+                      <th class="text-center">Nombre</th>
+                      <th class="text-center">Correo</th>
+                      <th class="text-center">Rol</th>
+                      <th class="text-center">Restablecer Contraseña</th>
+                      <th class="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="u in usuarios" :key="u.id_usuario">
+                      <td>{{ u.id_usuario }}</td>
+                      <td>
+                        <input v-if="editandoId === u.id_usuario" v-model="u.nombre" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ u.nombre }}</span>
+                      </td>
+                      <td>
+                        <input v-if="editandoId === u.id_usuario" v-model="u.correo" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ u.correo }}</span>
+                      </td>
+                      <td>
+                        <select v-if="editandoId === u.id_usuario" v-model="u.rol" class="form-select form-select-sm admin-select-table">
+                          <option value="Admin">Administrador</option>
+                          <option value="Personal">Personal</option>
+                        </select>
+                        <span v-else>{{ u.rol }}</span>
+                      </td>
+                      <td class="actions-cell text-center">
+                        <button
+                          class="btn btn-sm btn-tukuypacha-success "
+                          @click="restablecerContrasena(u.id_usuario)"
+                          title="Restablecer Contraseña"
+                        >
+                          <i class="fas fa-redo-alt"></i>
+                        </button>
+                      </td>
+                      <td class="actions-cell">
+                        <button class="btn btn-sm btn-tukuypacha-outline me-1" v-if="editandoId !== u.id_usuario" @click="iniciarEdicion(u)" title="Editar">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-tukuypacha me-1" v-else @click="guardarCambios(u)" title="Guardar cambios">
+                          <i class="fas fa-save"></i>
+                        </button>
+                        <button class="btn btn-sm btn-tukuypacha-secondary me-1" v-if="editandoId === u.id_usuario" @click="cancelarEdicion(u)" title="Cancelar">
+                          <i class="fas fa-times"></i>
+                        </button>
+                        <button
+                          class="btn btn-sm btn-tukuypacha-danger"
+                          @click="eliminarUsuarioLocal(u.id_usuario)"
+                          title="Eliminar"
+                        >
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -173,7 +184,7 @@ import logo from '../images/logo-top2.png';
 const router = useRouter()
 const usuario = ref({})
 const busquedaId = ref('')
-const participante = ref(null) // Esto es crucial para saber si se encontró un participante
+const participante = ref(null)
 const documentos = ref([])
 const mostrarUsuarios = ref(false)
 const usuarios = ref([])
@@ -198,6 +209,7 @@ watch(mostrarUsuarios, async (value) => {
       usuarios.value = res.data
     } catch (err) {
       console.error('Error al cargar usuarios:', err)
+      alert('Error al cargar usuarios');
     } finally {
       isLoading.value = false;
     }
@@ -237,21 +249,35 @@ const eliminarUsuarioLocal = async (id) => {
 
 const guardarCambios = async (usuarioEditado) => {
   try {
-    await axios.put(`http://localhost:3000/api/usuarios/${usuarioEditado.id_usuario}`, {
+    const dataToUpdate = {
       nombre: usuarioEditado.nombre,
       correo: usuarioEditado.correo,
-      contraseña: usuarioEditado.contraseña,
       rol: usuarioEditado.rol
-    })
-    console.log('Cambios guardados en la base de datos')
+    };
+    
+    await axios.put(`http://localhost:3000/api/usuarios/${usuarioEditado.id_usuario}`, dataToUpdate);
+    console.log('Cambios de usuario guardados en la base de datos');
   } catch (err) {
-    console.error('Error al guardar cambios:', err)
-    alert('No se pudieron guardar los cambios')
+    console.error('Error al guardar cambios:', err);
+    alert('No se pudieron guardar los cambios');
   } finally {
-    editandoId.value = null
+    editandoId.value = null;
     usuarioOriginal.value = null;
   }
-}
+};
+
+const restablecerContrasena = async (id) => {
+  const confirmar = confirm('¿Estás seguro de restablecer la contraseña de este usuario? Se generará una nueva y se enviará a su correo electrónico.');
+  if (!confirmar) return;
+
+  try {
+    const res = await axios.post(`http://localhost:3000/api/usuarios/${id}/restablecer-contrasena`);
+    alert(res.data.mensaje);
+  } catch (err) {
+    console.error('Error al restablecer contraseña:', err);
+    alert('No se pudo restablecer la contraseña. Revisa el correo del usuario.');
+  }
+};
 
 const cerrarSesion = () => {
   localStorage.removeItem('token')
@@ -264,7 +290,6 @@ const irARegistrar = () => {
   router.push('/registrar')
 }
 
-// Nueva función para redirigir a EditarParticipante
 const irAEditarParticipante = (id) => {
   router.push(`/editar-participante/${id}`);
 };
@@ -277,8 +302,9 @@ const buscarParticipante = async () => {
   }
   try {
     const res = await axios.get(
-      `http://localhost:3000/api/participantes?codigo=${busquedaId.value}`
+      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
     )
+
     if (res.data.length > 0) {
       const encontrado = res.data[0]
       participante.value = encontrado
@@ -286,7 +312,6 @@ const buscarParticipante = async () => {
       const docRes = await axios.get(
         `http://localhost:3000/api/documentos?participanteId=${encontrado.id_participante}`
       )
-      console.log('📄 documentos recibidos:', docRes.data)
       documentos.value = docRes.data
     } else {
       participante.value = null
@@ -294,37 +319,38 @@ const buscarParticipante = async () => {
     }
   } catch (err) {
     console.error('Error en buscarParticipante:', err)
-    participante.value = null; // Asegurarse de limpiar si hay error
+    participante.value = null;
     documentos.value = [];
   }
 }
 </script>
 
 <style>
-/* --- Importar la fuente Poppins --- */
+/* --- Importar la fuente Poppins y Font Awesome --- */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
 /* --- Variables de Color de Tukuypacha.com --- */
 :root {
-  --tukuypacha-accent: #f05a30; /* Naranja rojizo para acentos */
-  --tukuypacha-button-bg: #e76124; /* Naranja más intenso para el botón */
-  --tukuypacha-dark-text: #333333; /* Texto oscuro general */
-  --tukuypacha-light-text: #666666; /* Texto secundario/etiquetas */
-  --tukuypacha-bg-light: #f8f9fa; /* Fondo claro para la barra lateral y algunas secciones */
-  --tukuypacha-bg-main: #f5f5f5; /* Fondo general del contenido principal */
-  --tukuypacha-border-color: #d0d0d0; /* Bordes suaves */
-  --tukuypacha-card-bg: #ffffff; /* Fondo para tarjetas y modales */
-  --tukuypacha-hover-bg: #e9ecef; /* Fondo al pasar el mouse */
-  --tukuypacha-success: #28a745; /* Verde para acciones de éxito */
-  --tukuypacha-danger: #dc3545; /* Rojo para acciones de peligro */
-  --tukuypacha-secondary-btn: #6c757d; /* Gris para botones secundarios */
+  --tukuypacha-accent: #f05a30;
+  --tukuypacha-button-bg: #e76124;
+  --tukuypacha-dark-text: #333333;
+  --tukuypacha-light-text: #666666;
+  --tukuypacha-bg-light: #f8f9fa;
+  --tukuypacha-bg-main: #f5f5f5;
+  --tukuypacha-border-color: #d0d0d0;
+  --tukuypacha-card-bg: #ffffff;
+  --tukuypacha-hover-bg: #e9ecef;
+  --tukuypacha-success: #28a745;
+  --tukuypacha-danger: #dc3545;
+  --tukuypacha-secondary-btn: #6c757d;
 }
 
 /* --- Estilos Generales para el Dashboard --- */
 body {
   font-family: 'Poppins', sans-serif;
   color: var(--tukuypacha-dark-text);
-  background-color: var(--tukuypacha-bg-main); /* Fondo para todo el cuerpo */
+  background-color: var(--tukuypacha-bg-main);
 }
 
 .admin-dashboard-wrapper {
@@ -340,7 +366,6 @@ body {
   border-right: 1px solid var(--tukuypacha-border-color);
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
   padding: 2rem !important;
-  /* Ya tiene d-flex flex-column del template, no es necesario aquí */
 }
 
 .admin-logo {
@@ -350,28 +375,22 @@ body {
 }
 
 .sidebar-profile-info {
-  margin-bottom: 2rem !important; /* Ajustado para más espacio */
+  margin-bottom: 2rem !important;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--tukuypacha-border-color);
-  text-align: center; /* Centrar el texto del perfil */
+  text-align: center;
 }
 
-/* Nuevos estilos para el nombre de usuario y el rol */
 .sidebar-profile-info .user-name {
-  font-size: 1.3rem; /* Tamaño más grande para el nombre */
-  font-weight: 700; /* Más audaz */
-  color: var(--tukuypacha-accent); /* Color principal de Tukuypacha */
-  margin-bottom: 0.2rem; /* Espacio entre nombre y rol */
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--tukuypacha-accent);
+  margin-bottom: 0.2rem;
 }
 
 .sidebar-profile-info .user-role {
-  font-size: 0.95rem; /* Tamaño ligeramente más grande que antes */
+  font-size: 0.95rem;
   color: var(--tukuypacha-light-text);
-}
-
-.sidebar-buttons {
-  /* Este div es el flex-grow-1 para empujar el botón de cerrar sesión hacia abajo */
-  /* No se necesita CSS adicional aquí si ya tiene flex-grow-1 y d-flex flex-column */
 }
 
 .btn-tukuypacha-sidebar {
@@ -406,7 +425,7 @@ body {
   border-color: #bd2130 !important;
 }
 
-/* --- Contenido Principal (el resto sigue igual) --- */
+/* --- Contenido Principal --- */
 .admin-main-content {
   background-color: var(--tukuypacha-bg-main);
   padding: 2.5rem !important;
@@ -419,7 +438,7 @@ body {
   margin-bottom: 2.5rem !important;
 }
 
-/* --- Tarjetas de Contenido (Buscar, Participante, Documentos) --- */
+/* --- Tarjetas de Contenido --- */
 .admin-card {
   border: 1px solid var(--tukuypacha-border-color);
   border-radius: 8px;
@@ -442,7 +461,7 @@ body {
   color: var(--tukuypacha-dark-text);
 }
 
-/* --- Inputs y Botones Globales de Contenido Principal --- */
+/* --- Inputs y Botones --- */
 .admin-input {
   border-radius: 5px;
   border: 1px solid var(--tukuypacha-border-color) !important;
@@ -573,44 +592,21 @@ body {
 }
 
 .admin-modal-dialog {
-  /* Antes modal-lg (900px), ahora modal-xl por defecto (1140px en Bootstrap 5) */
-  max-width: 1140px; /* Ancho por defecto de modal-xl en Bootstrap 5 */
-  width: 90%; /* Ajuste para que no sea excesivamente grande en pantallas no tan grandes */
+  width: 90%;
+  max-width: 500px;
   margin: 1.75rem auto;
   transition: width 0.3s ease, max-width 0.3s ease;
 }
 
-.admin-modal-expanded {
-  /* Si editandoId no es null, queremos el modal un poco más grande */
-  max-width: 1300px; /* Un poco más de espacio para la edición en PC */
-  width: 95%; /* Asegura que ocupe más en pantallas grandes */
-}
-
-@media (min-width: 1400px) { /* Para pantallas muy grandes (lg en Bootstrap 5 es 992px, xl 1200px, xxl 1400px) */
-    .admin-modal-dialog {
-        max-width: 1200px; /* Aumenta el ancho en pantallas aún más grandes */
-    }
-    .admin-modal-expanded {
-        max-width: 1500px; /* Ancho máximo para la edición en pantallas muy grandes */
-    }
-}
-
-
-@media (max-width: 1200px) { /* Para pantallas medianas a grandes */
-  .admin-modal-expanded {
-    width: 95%; /* Que ocupe un mayor porcentaje */
-  }
-}
-
-@media (max-width: 768px) { /* Para móviles y tablets */
+/* Reglas para pantallas grandes (desktops) */
+@media (min-width: 992px) {
   .admin-modal-dialog {
-    width: 95%;
-    max-width: 95%;
-    margin: 1rem auto;
+    max-width: 1200px;
   }
-  .admin-modal-expanded {
-    width: 98%; /* Un poco más de espacio en pantallas pequeñas si es necesario */
-  }
+}
+
+.admin-modal-expanded {
+  max-width: 95%;
 }
 
 .admin-modal-content {
@@ -644,83 +640,80 @@ body {
   padding: 1.5rem;
 }
 
-.admin-modal-footer {
-  border-top: 1px solid var(--tukuypacha-border-color);
-  padding: 1rem 1.5rem;
-  background-color: var(--tukuypacha-bg-light);
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
+/* --- Tabla de Usuarios --- */
+.table-responsive-custom {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* --- Tabla de Usuarios dentro del Modal --- */
 .admin-table {
-  font-size: 0.9rem !important;
-  color: var(--tukuypacha-dark-text) !important;
-  border-collapse: collapse !important; /* Asegura que los bordes se fusionen bien */
-  width: 100% !important; /* Asegura que la tabla ocupe el 100% del contenedor */
-  table-layout: fixed; /* Esto ayuda a que colgroup funcione mejor */
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
 }
 
-/* Ajuste de anchos para las columnas en PC (desktop) */
-.admin-table colgroup col:nth-child(1) { width: 5%; } /* ID */
-.admin-table colgroup col:nth-child(2) { width: 20%; } /* Nombre */
-.admin-table colgroup col:nth-child(3) { width: 25%; } /* Correo */
-.admin-table colgroup col:nth-child(4) { width: 15%; } /* Contraseña */
-.admin-table colgroup col:nth-child(5) { width: 15%; } /* Rol */
-.admin-table colgroup col:nth-child(6) { width: 20%; } /* Acciones */
-
-
-.admin-table thead th {
-  background-color: var(--tukuypacha-accent) !important; /* Color principal de Tukuypacha para el encabezado */
-  color: #fff !important; /* Texto blanco para el encabezado sobre el fondo naranja */
-  font-weight: 600 !important;
-  border-bottom: 2px solid var(--tukuypacha-border-color) !important; /* Mantener un borde inferior fuerte */
-  padding: 0.8rem 1rem !important; /* Aumentar el padding para más espacio */
-  text-align: center !important; /* Asegurar que el texto del encabezado esté alineado a la izquierda */
+.admin-table th {
+  background-color: var(--tukuypacha-accent);
+  color: white;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
 }
 
-.admin-table tbody tr {
-  border-bottom: 1px solid var(--tukuypacha-border-color) !important; /* Añadir un borde inferior suave a las filas */
+.admin-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
 }
 
-.admin-table tbody tr:last-child {
-  border-bottom: none !important; /* Eliminar el borde de la última fila */
+.admin-table tr:hover {
+  background-color: rgba(0,0,0,0.02);
 }
 
-.admin-table tbody tr:hover {
-  background-color: var(--tukuypacha-hover-bg) !important; /* Fondo más claro al pasar el mouse */
+.actions-cell {
+  white-space: nowrap;
 }
 
-.admin-table tbody td {
-  padding: 0.7rem 1rem !important; /* Ajustar el padding de las celdas de datos */
-  vertical-align: middle !important; /* Centrar verticalmente el contenido de la celda */
-  text-align: center; /* Alineación por defecto para las celdas de datos */
-  /* Ajustar texto-align para celdas específicas si es necesario */
-  &:nth-child(2), /* Nombre */
-  &:nth-child(3) { /* Correo */
-    text-align: left;
-  }
+.admin-input-table {
+  font-size: 0.85rem !important;
+  padding: 0.4rem 0.7rem !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--tukuypacha-border-color) !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease;
+  width: 100%;
 }
 
-/* Mejoras visuales para inputs y selects dentro de la tabla */
-.admin-input-table,
 .admin-select-table {
   font-size: 0.85rem !important;
-  padding: 0.4rem 0.7rem !important; /* Ligeramente más padding */
+  padding: 0.4rem 0.7rem !important;
   border-radius: 4px !important;
-  border: 1px solid var(--tukuypacha-border-color) !important; /* Borde visible */
-  box-shadow: none !important; /* Eliminar sombras por defecto si las hubiera */
+  border: 1px solid var(--tukuypacha-border-color) !important;
+  box-shadow: none !important;
   transition: border-color 0.2s ease;
-  width: 100%; /* Asegura que los inputs/selects dentro de la tabla ocupen todo el ancho de su celda */
+  width: 100%;
+  min-width: 120px;
 }
+
+/* Regla para dar espacio a las columnas de la tabla */
+.admin-table th:nth-child(5), /* Restablecer Contraseña */
+.admin-table td:nth-child(5) {
+  width: 150px;
+}
+
+.admin-table th:last-child, /* Acciones */
+.admin-table td:last-child {
+  width: 100px;
+}
+
 
 .admin-input-table:focus,
 .admin-select-table:focus {
-  border-color: var(--tukuypacha-accent) !important; /* Resaltar con el color de Tukuypacha al enfocar */
-  box-shadow: 0 0 0 0.2rem rgba(240, 90, 48, 0.2) !important; /* Sombra ligera al enfocar */
+  border-color: var(--tukuypacha-accent) !important;
+  box-shadow: 0 0 0 0.2rem rgba(240, 90, 48, 0.2) !important;
 }
 
-/* Botón secundario para "Cancelar" */
 .btn-tukuypacha-secondary {
   background-color: var(--tukuypacha-secondary-btn) !important;
   border-color: var(--tukuypacha-secondary-btn) !important;
@@ -732,22 +725,43 @@ body {
 }
 
 .btn-tukuypacha-secondary:hover {
-  background-color: #5a6268 !important; /* Un gris un poco más oscuro al pasar el mouse */
+  background-color: #5a6268 !important;
   border-color: #545b62 !important;
   opacity: 0.9;
 }
 
-/* Ajuste para los botones dentro de la tabla para que se vean bien en tamaño pequeño */
 .admin-table .btn-sm {
-  padding: 0.3rem 0.6rem !important; /* Ajustar el padding de los botones pequeños */
-  font-size: 0.75rem !important; /* Ajustar el tamaño de fuente de los botones pequeños */
-  min-width: 80px !important; /* Mantenemos este para uniformidad */
-  text-align: center !important; /* Asegura que el texto se centre */
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Asegurar que el modal tenga un padding adecuado en el cuerpo */
-.admin-modal-body {
-    padding: 1.5rem; /* Mantener un buen padding dentro del cuerpo del modal */
+.admin-table .btn-sm i {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+[title] {
+  position: relative;
+}
+
+[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 100;
 }
 
 /* --- Responsive adjustments --- */
@@ -763,7 +777,7 @@ body {
     border-bottom: 1px solid var(--tukuypacha-border-color);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     padding: 1rem !important;
-    flex-direction: column; /* Asegura que los elementos se apilen */
+    flex-direction: column;
     align-items: center;
   }
 
@@ -780,26 +794,26 @@ body {
     border-bottom: none;
   }
 
-  /* Ajuste para los botones en móviles dentro de la sidebar */
   .sidebar-buttons {
-      width: 80%; /* Asegura que ocupen un buen ancho en móvil */
-      align-items: center; /* Centra los botones si el div es más ancho */
+    width: 80%;
+    align-items: center;
   }
   .admin-sidebar .btn-tukuypacha-sidebar,
   .admin-sidebar .btn-tukuypacha-danger {
-    width: 100% !important; /* Ocupan todo el ancho del contenedor sidebar-buttons */
-    margin-bottom: 0.5rem !important; /* Espacio entre ellos */
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
   }
   .admin-sidebar .btn-tukuypacha-danger {
-      margin-top: 0.5rem !important; /* Margen para el botón de cerrar sesión */
+    margin-top: 0.5rem !important;
   }
-
 
   .admin-main-content {
     padding: 1.5rem !important;
   }
 
   .admin-main-title {
+    color: var(--tukuypacha-accent);
+    font-weight: 700;
     font-size: 1.7rem;
     margin-bottom: 1.5rem !important;
     text-align: center;
@@ -822,6 +836,9 @@ body {
   }
 
   .participant-title {
+    color: var(--tukuypacha-button-bg);
+    font-weight: 600;
+    margin-bottom: 1rem;
     font-size: 1.3rem;
     text-align: center;
   }
@@ -849,70 +866,28 @@ body {
     font-size: 1.3rem;
   }
 
+  .table-responsive-custom {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
   .admin-table {
-    font-size: 0.8rem;
+    min-width: 600px;
+    border-collapse: collapse;
+    width: 100%;
   }
-
-  .admin-table thead th {
-    padding: 0.5rem;
-    font-size: 0.8rem;
+  
+  .admin-table th,
+  .admin-table td {
+    padding: 8px 4px;
+    font-size: 0.85rem;
   }
-
-  .admin-table tbody td {
-    padding: 0.5rem;
-    font-size: 0.8rem;
-  }
-
+  
   .admin-input-table,
   .admin-select-table {
-    font-size: 0.8rem !important;
     padding: 0.2rem 0.4rem !important;
-  }
-
-  /* Reset de anchos de columna para móviles, dejando que el contenido defina el ancho */
-  .admin-table colgroup col { width: auto !important; }
-}
-
-/* Estilos para pantallas aún más pequeñas (ej., teléfonos muy estrechos) */
-@media (max-width: 480px) {
-  .sidebar-buttons {
-      width: 95%; /* Ocupa casi todo el ancho en móviles muy pequeños */
-  }
-  .admin-sidebar .btn-tukuypacha-sidebar,
-  .admin-sidebar .btn-tukuypacha-danger {
-    width: 100% !important;
-  }
-
-  .admin-main-title {
-    font-size: 1.5rem;
-  }
-
-  .admin-card-header h5 {
-    font-size: 1rem;
-  }
-
-  .admin-input {
-    font-size: 0.9rem;
-  }
-
-  .btn-tukuypacha,
-  .btn-tukuypacha-outline,
-  .btn-tukuypacha-success {
-    font-size: 0.9rem;
-  }
-
-  .participant-title {
-    font-size: 1.2rem;
-  }
-
-  .admin-table {
-    font-size: 0.7rem;
-  }
-
-  .admin-table thead th,
-  .admin-table tbody td {
-    padding: 0.3rem;
-    font-size: 0.7rem;
+    font-size: 0.8rem !important;
   }
 }
 </style>

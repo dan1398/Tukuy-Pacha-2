@@ -7,11 +7,6 @@ import { dirname } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Ruta absoluta a la carpeta 'uploads'
-// Desde 'back/src/middleware/upload.js', necesitamos subir:
-// 1. Un nivel para salir de 'middleware' (nos deja en 'back/src')
-// 2. Otro nivel para salir de 'src' (nos deja en 'back')
-// 3. Y luego entramos en la carpeta 'uploads'
 const uploadDir = path.join(__dirname, '..', '..', 'uploads')
 
 // Para fines de depuración: imprime la ruta donde Multer intentará guardar
@@ -19,9 +14,6 @@ console.log('Multer intentará guardar en (upload.js):', uploadDir);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Asegúrate de que el directorio de destino exista.
-    // Multer no lo crea por defecto, por lo que una buena práctica es verificarlo.
-    // Aunque para el error 404, el problema suele ser la ruta en sí, no que no exista.
     cb(null, uploadDir)
   },
   filename: function (req, file, cb) {
@@ -36,13 +28,15 @@ const fileFilter = (req, file, cb) => {
     'image/png',
     'application/pdf',
     'application/vnd.ms-excel', // .xls
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // .xlsx
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/msword', // .doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
   ]
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true)
   } else {
     // Puedes personalizar este mensaje de error
-    cb(new Error('Tipo de archivo no permitido. Solo se permiten imágenes (jpeg, png), PDF y hojas de cálculo (xls, xlsx).'), false)
+    cb(new Error('Tipo de archivo no permitido. Solo se permiten imágenes (jpeg, png), PDF, hojas de cálculo (xls, xlsx) y Word (DOC, DOCX).'), false)
   }
 }
 

@@ -1,5 +1,5 @@
 # Ignorar la carpeta de subidas de archivos
-uploads/
+uploads
 
 # Ignorar el archivo de variables de entorno
 .env

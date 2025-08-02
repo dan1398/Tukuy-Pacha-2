@@ -23,7 +23,7 @@
         </div>
         <div class="card-body">
           <div class="input-group mb-3">
-            <input v-model="busquedaId" type="text" placeholder="Buscar por Código" class="form-control admin-input" />
+            <input v-model="busquedaId" type="text" placeholder="Buscar" class="form-control admin-input" />
             <button class="btn-tukuypacha" @click="buscarParticipante">Buscar</button>
             <button class="btn-tukuypacha ms-2" @click="router.push('/nuevo-participante')">Nuevo Participante</button>
           </div>
@@ -118,33 +118,39 @@ const cerrarSesion = () => {
 }
 
 const buscarParticipante = async () => {
-  if (!busquedaId.value.trim()) {
-    participante.value = null
-    documentos.value = []
-    return
-  }
-  try {
-    const res = await axios.get(
-      `http://localhost:3000/api/participantes?codigo=${busquedaId.value}`
-    )
-    if (res.data.length > 0) {
-      const encontrado = res.data[0]
-      participante.value = encontrado
+  if (!busquedaId.value.trim()) {
+    participante.value = null
+    documentos.value = []
+    return
+  }
+  try {
+    // En lugar de buscar por 'codigo', ahora usamos el nuevo endpoint de búsqueda
+    const res = await axios.get(
+      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
+    )
 
-      const docRes = await axios.get(
-        `http://localhost:3000/api/documentos?participanteId=${encontrado.id_participante}`
-      )
-      console.log('📄 documentos recibidos:', docRes.data) // Mantener este log si es útil para depuración
-      documentos.value = docRes.data
-    } else {
-      participante.value = null
-      documentos.value = []
-    }
-  } catch (err) {
-    console.error('Error en buscarParticipante:', err)
-    participante.value = null; // Asegurarse de limpiar si hay error
-    documentos.value = [];
-  }
+    // El resultado de la búsqueda será un array, no un solo participante
+    if (res.data.length > 0) {
+      // Si la búsqueda devuelve múltiples resultados, puedes tomar el primero
+      const encontrado = res.data[0]
+      participante.value = encontrado
+
+      // Y luego buscar sus documentos
+      const docRes = await axios.get(
+        `http://localhost:3000/api/documentos?participanteId=${encontrado.id_participante}`
+      )
+      console.log('documentos recibidos:', docRes.data)
+      documentos.value = docRes.data
+    } else {
+      // Si no se encuentra nada
+      participante.value = null
+      documentos.value = []
+    }
+  } catch (err) {
+    console.error('Error en buscarParticipante:', err)
+    participante.value = null;
+    documentos.value = [];
+  }
 }
 </script>
 
