@@ -23,66 +23,125 @@
         </div>
         <div class="card-body">
           <div class="input-group mb-3">
-            <input v-model="busquedaId" type="text" placeholder="Buscar" class="form-control admin-input" />
-            <button class="btn-tukuypacha" @click="buscarParticipante">Buscar</button>
-            <button class="btn-tukuypacha ms-2" @click="router.push('/nuevo-participante')">Nuevo Participante</button>
+            <input 
+              v-model="busquedaId" 
+              type="text" 
+              placeholder="Buscar por Nombre, CI, Código, Celular o Patrocinador" 
+              class="form-control admin-input" 
+            />
+            
+            <!-- Botón de Descargar PDF que aparece solo si un participante es seleccionado -->
+            <div class="d-flex align-items-center ms-2" v-if="participanteSeleccionado">
+              <button
+                class="btn-tukuypacha-success"
+                @click="descargarPDF"
+              >
+                Descargar PDF
+              </button>
+            </div>
+            
+            <!-- Botón de Nuevo Participante que aparece si no hay un participante seleccionado -->
+            <button
+              v-else
+              class="btn-tukuypacha ms-2"
+              @click="router.push('/nuevo-participante')"
+            >
+              Nuevo Participante
+            </button>
           </div>
 
-          <div v-if="participante" class="card mt-4 participant-card">
+          <!-- Muestra los resultados de la búsqueda en tiempo real -->
+          <div v-if="busquedaId.length >= 3 && participantes.length > 0 && !participanteSeleccionado">
+            <h6 class="mt-4">Resultados de la búsqueda:</h6>
+            <ul class="list-group list-group-flush admin-list-group">
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center admin-list-item"
+                v-for="p in participantes"
+                :key="p.id_participante"
+                @click="seleccionarParticipante(p)"
+              >
+                <div class="d-flex align-items-center">
+                  <img
+                    v-if="p.foto"
+                    :src="`http://localhost:3000/uploads/${p.foto}`"
+                    alt="Foto del participante"
+                    class="img-thumbnail me-3"
+                    style="width: 50px; height: 50px; object-fit: cover;"
+                  />
+                  <div class="doc-file-name">
+                    {{ p.nombre }} {{ p.apellido_paterno }} {{ p.apellido_materno }}
+                    <small class="text-muted d-block">Código: {{ p.codigo }}</small>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div v-else-if="busquedaId.length >= 3 && participantes.length === 0" class="alert alert-info mt-4" role="alert">
+            No se encontraron participantes.
+          </div>
+
+          <!-- Muestra la información del participante seleccionado -->
+          <div v-if="participanteSeleccionado" class="card mt-4 participant-card" ref="cardParticipante">
             <div class="card-body">
-              <h5 class="card-title participant-title">{{ participante.nombre }}</h5>
-              <div v-if="participante.foto" class="text-center mb-3">
-                <img :src="`http://localhost:3000/uploads/${participante.foto}`" alt="Foto del participante" class="img-thumbnail participant-photo" />
+              <h5 class="card-title participant-title">
+                {{ participanteSeleccionado.nombre}} {{ participanteSeleccionado.apellido_paterno }} {{ participanteSeleccionado.apellido_materno }}
+              </h5>
+              <div v-if="participanteSeleccionado.foto" class="text-center mb-3">
+                <img :src="`http://localhost:3000/uploads/${participanteSeleccionado.foto}`" alt="Foto del participante" class="img-thumbnail participant-photo" />
               </div>
               <div class="row">
-                <div class="col-md-6"><p><strong>Código:</strong> {{ participante.codigo }}</p></div>
-                <div class="col-md-6"><p><strong>CI:</strong> {{ participante.CI }}</p></div>
-                <div class="col-md-6"><p><strong>Fecha de nacimiento:</strong> {{ new Date(participante.fecha_nacimiento).toLocaleDateString() }}</p></div>
-                <div class="col-md-6"><p><strong>Dirección:</strong> {{ participante.direccion }}</p></div>
-                <div class="col-md-6"><p><strong>Celular:</strong> {{ participante.celular }}</p></div>
-                <div class="col-md-6"><p><strong>Nombre del patrocinador:</strong> {{ participante.nombre_patrocinador }}</p></div>
-                <div class="col-md-6"><p><strong>Contacto:</strong> {{ participante.contacto }}</p></div>
+                <div class="col-md-6"><p><strong>Código:</strong> {{ participanteSeleccionado.codigo }}</p></div>
+                <div class="col-md-6"><p><strong>CI:</strong> {{ participanteSeleccionado.CI }}</p></div>
+                <div class="col-md-6"><p><strong>Fecha de nacimiento:</strong> {{ new Date(participanteSeleccionado.fecha_nacimiento).toLocaleDateString() }}</p></div>
+                <div class="col-md-6"><p><strong>Dirección:</strong> {{ participanteSeleccionado.direccion }}</p></div>
+                <div class="col-md-6"><p><strong>Celular:</strong> {{ participanteSeleccionado.celular }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_nombre"><p><strong>Nombre del Patrocinador:</strong> {{ participanteSeleccionado.patrocinador_nombre }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_apellido_paterno"><p><strong>Apellido Paterno:</strong> {{ participanteSeleccionado.patrocinador_apellido_paterno }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_apellido_materno"><p><strong>Apellido Materno:</strong> {{ participanteSeleccionado.patrocinador_apellido_materno }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_celular"><p><strong>Celular:</strong> {{ participanteSeleccionado.patrocinador_celular }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_correo"><p><strong>Correo Electrónico:</strong> {{ participanteSeleccionado.patrocinador_correo }}</p></div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div v-if="documentos && documentos.length" class="card shadow-sm mb-4 admin-card">
-        <div class="card-header admin-card-header">
-          <h5>Documentos Relacionados</h5>
-        </div>
-        <div class="card-body">
-          <ul class="list-group list-group-flush admin-list-group">
-            <li
-              class="list-group-item d-flex justify-content-between align-items-start admin-list-item"
-              v-for="doc in documentos"
-              :key="doc.id_documento"
-            >
-              <div>
-                <div class="doc-file-name"><strong>Archivo:</strong> {{ doc.nombre_archivo }}</div>
-                <div class="text-muted small"><strong>Tipo:</strong> {{ doc.tipo_documento }}</div>
-                <div class="text-muted small">
-                  <strong>Fecha de subida:</strong>
-                  {{ new Date(doc.fecha_subida).toLocaleDateString() }}
-                </div>
-              </div>
-              <div class="btn-group btn-group-sm">
-                <a
-                  v-if="!doc.ruta_archivo.endsWith('.xls') && !doc.ruta_archivo.endsWith('.xlsx')"
-                  :href="`http://localhost:3000/uploads/${doc.ruta_archivo}`"
-                  target="_blank"
-                  class="btn btn-sm btn-tukuypacha-outline"
+          
+          <!-- Muestra los documentos del participante seleccionado -->
+          <div v-if="participanteSeleccionado && documentos.length > 0" class="card shadow-sm mt-4 admin-card">
+            <div class="card-header admin-card-header">
+              <h5>Documentos Relacionados</h5>
+            </div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush admin-list-group">
+                <li
+                  class="list-group-item d-flex justify-content-between align-items-start admin-list-item"
+                  v-for="doc in documentos"
+                  :key="doc.id_documento"
                 >
-                  Ver
-                </a>
-                <a
-                  :href="`http://localhost:3000/api/documentos/download/${doc.ruta_archivo}`"
-                  class="btn btn-sm btn-tukuypacha-success ms-2"
-                >Descargar</a>
-              </div>
-            </li>
-          </ul>
+                  <div>
+                    <div class="doc-file-name"><strong>Archivo:</strong> {{ doc.nombre_archivo }}</div>
+                    <div class="text-muted small"><strong>Tipo:</strong> {{ doc.tipo_documento }}</div>
+                    <div class="text-muted small">
+                      <strong>Fecha de subida:</strong>
+                      {{ new Date(doc.fecha_subida).toLocaleDateString() }}
+                    </div>
+                  </div>
+                  <div class="btn-group btn-group-sm">
+                    <a
+                      v-if="!doc.ruta_archivo.endsWith('.xls') && !doc.ruta_archivo.endsWith('.xlsx')"
+                      :href="`http://localhost:3000/uploads/${doc.ruta_archivo}`"
+                      target="_blank"
+                      class="btn btn-sm btn-tukuypacha-outline"
+                    >
+                      Ver
+                    </a>
+                    <a
+                      :href="`http://localhost:3000/api/documentos/download/${doc.ruta_archivo}`"
+                      class="btn btn-sm btn-tukuypacha-success ms-2"
+                    >Descargar</a>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -90,16 +149,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
-import logo from '../images/logo-top2.png'; // Asegúrate de que esta ruta sea correcta para tu logo
+import logo from '../images/logo-top2.png';
+import html2pdf from 'html2pdf.js';
 
 const router = useRouter()
 const usuario = ref({})
 const busquedaId = ref('')
-const participante = ref(null)
+const participantes = ref([])
+const participanteSeleccionado = ref(null)
 const documentos = ref([])
+const cardParticipante = ref(null); // Referencia al elemento HTML que se convertirá en PDF
+let searchTimeout = null;
 
 onMounted(() => {
   const userData = localStorage.getItem('usuario')
@@ -117,41 +180,73 @@ const cerrarSesion = () => {
   router.push('/login')
 }
 
-const buscarParticipante = async () => {
-  if (!busquedaId.value.trim()) {
-    participante.value = null
-    documentos.value = []
-    return
-  }
-  try {
-    // En lugar de buscar por 'codigo', ahora usamos el nuevo endpoint de búsqueda
-    const res = await axios.get(
-      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
-    )
+// Watcher para la búsqueda en tiempo real
+watch(busquedaId, (newValue) => {
+  if (!newValue || newValue.trim().length < 3) {
+    participantes.value = [];
+    participanteSeleccionado.value = null;
+    documentos.value = [];
+    return;
+  }
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    buscarParticipantes();
+  }, 300);
+});
 
-    // El resultado de la búsqueda será un array, no un solo participante
-    if (res.data.length > 0) {
-      // Si la búsqueda devuelve múltiples resultados, puedes tomar el primero
-      const encontrado = res.data[0]
-      participante.value = encontrado
+const buscarParticipantes = async () => {
+  try {
+    const res = await axios.get(
+      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
+    );
+    participantes.value = res.data;
+    participanteSeleccionado.value = null;
 
-      // Y luego buscar sus documentos
-      const docRes = await axios.get(
-        `http://localhost:3000/api/documentos?participanteId=${encontrado.id_participante}`
-      )
-      console.log('documentos recibidos:', docRes.data)
-      documentos.value = docRes.data
-    } else {
-      // Si no se encuentra nada
-      participante.value = null
-      documentos.value = []
-    }
-  } catch (err) {
-    console.error('Error en buscarParticipante:', err)
-    participante.value = null;
-    documentos.value = [];
-  }
+    if (participantes.value.length === 1) {
+      seleccionarParticipante(participantes.value[0]);
+    } else {
+      documentos.value = [];
+    }
+
+  } catch (err) {
+    console.error('Error en buscarParticipantes:', err);
+    participantes.value = [];
+    participanteSeleccionado.value = null;
+    documentos.value = [];
+  }
+};
+
+const seleccionarParticipante = async (p) => {
+  participanteSeleccionado.value = p;
+  try {
+    const docRes = await axios.get(
+      `http://localhost:3000/api/documentos?participanteId=${p.id_participante}`
+    );
+    documentos.value = docRes.data;
+  } catch (err) {
+    console.error('Error al obtener documentos:', err);
+    documentos.value = [];
+  }
 }
+
+// Lógica para descargar el PDF
+const descargarPDF = () => {
+  if (!participanteSeleccionado.value || !cardParticipante.value) {
+    // Reemplazado alert con console.error
+    console.error('Por favor, seleccione un participante para descargar el PDF.');
+    return;
+  }
+
+  const opt = {
+    margin: 1,
+    filename: `Participante_${participanteSeleccionado.value.codigo}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true }, // Se añade useCORS: true aquí
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  html2pdf().from(cardParticipante.value).set(opt).save();
+};
 </script>
 
 <style scoped>
@@ -404,6 +499,7 @@ body {
 
 .admin-list-item:hover {
   background-color: var(--tukuypacha-hover-bg);
+  cursor: pointer;
 }
 
 .doc-file-name {
@@ -526,6 +622,7 @@ body {
   .btn-tukuypacha-outline,
   .btn-tukuypacha-success {
     font-size: 0.9rem;
+    padding: 0.5rem 1rem;
   }
 
   .participant-title {

@@ -12,6 +12,8 @@ import {
 
 import upload from '../middleware/upload.js'; 
 
+
+
 const router = express.Router();
 
 // 1. Ruta GET para la búsqueda "tipo Google" de participantes

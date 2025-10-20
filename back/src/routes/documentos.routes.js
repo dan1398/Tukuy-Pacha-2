@@ -8,6 +8,7 @@ import {
 } from '../controllers/documentos.controller.js';
 import upload from '../middleware/upload.js'; // Multer configurado
 
+
 const router = Router();
 
 router.get('/', getDocumentos); // Ruta para obtener documentos

@@ -1,98 +1,125 @@
 <template>
+  <!-- Contenedor principal con los estilos del diseño "tukuypacha" -->
   <div class="tukuypacha-register-wrapper d-flex justify-content-center align-items-center vh-100">
     <div class="card tukuypacha-register-card shadow-sm p-4 p-md-5">
       <div class="text-center mb-4">
-        <h3 class="tukuypacha-register-title">Registrar Usuario</h3>
+        <!-- Título del formulario -->
+        <h3 class="tukuypacha-register-title">Registrar Patrocinador</h3>
       </div>
-      <form @submit.prevent="registrarUsuario" class="row g-3">
+      
+      <!-- Formulario para registrar el patrocinador -->
+      <form @submit.prevent="registrarPatrocinador" class="row g-3">
+        
+        <!-- Campo para el nombre del patrocinador (requerido) -->
         <div class="col-12">
           <label for="nombre" class="form-label tukuypacha-label">Nombre</label>
           <input v-model="nombre" type="text" id="nombre" name="nombre" class="form-control tukuypacha-input" required />
         </div>
+        
+        <!-- Campo para el apellido paterno del patrocinador -->
         <div class="col-12">
           <label for="apellido_paterno" class="form-label tukuypacha-label">Apellido Paterno</label>
-          <input v-model="apellido_paterno" type="text" id="apellido_paterno" name="apellido_paterno" class="form-control tukuypacha-input" required />
+          <input v-model="apellido_paterno" type="text" id="apellido_paterno" name="apellido_paterno" class="form-control tukuypacha-input" />
         </div>
+
+        <!-- Campo para el apellido materno del patrocinador -->
         <div class="col-12">
           <label for="apellido_materno" class="form-label tukuypacha-label">Apellido Materno</label>
           <input v-model="apellido_materno" type="text" id="apellido_materno" name="apellido_materno" class="form-control tukuypacha-input" />
         </div>
+        
+        <!-- Campo para el celular con la librería vue-tel-input -->
+        <div class="col-12">
+          <label for="telefono" class="form-label tukuypacha-label" >Celular</label>
+          <VueTelInput 
+            v-model="celularCompleto" 
+            mode="international" 
+            :inputOptions="{ placeholder: 'Ingresa tu número de celular' }"
+            :dropdownOptions="{ showDialCodeInSelection: true, showSearchBox: true, showFlags: true }"
+            class="tukuypacha-input-tel"
+            ref="telInputRef"
+            name="celular"
+          ></VueTelInput>
+        </div>
+
+        <!-- Campo para el correo electrónico del patrocinador (ya no es requerido) -->
         <div class="col-12">
           <label for="correo" class="form-label tukuypacha-label">Correo</label>
-          <input v-model="correo" type="email" id="correo" name="correo" class="form-control tukuypacha-input" required />
+          <input v-model="correo" type="email" id="correo" name="correo" class="form-control tukuypacha-input" />
         </div>
-        <div class="col-12">
-          <label for="rol" class="form-label tukuypacha-label">Rol</label>
-          <select v-model="rol" id="rol" name="rol" class="form-select tukuypacha-select" required>
-            <option value="Administrador">Administrador</option>
-            <option value="Personal">Personal</option>
-          </select>
-        </div>
+        
+        <!-- Contenedor para los botones de acción -->
         <div class="col-12 d-flex justify-content-between gap-2 mt-4">
           <button type="submit" class="btn btn-tukuypacha flex-grow-1">Registrar</button>
-          <button type="button" class="btn btn-tukuypacha-secondary flex-grow-1" @click="volver">Cancelar</button>
+          <button type="button" class="btn btn-tukuypacha-secondary flex-grow-1" @click="cancelar">Cancelar</button>
         </div>
       </form>
+      
+      <!-- Mensaje de respuesta, si existe -->
       <div v-if="mensaje" class="alert alert-info mt-3">{{ mensaje }}</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { VueTelInput } from 'vue-tel-input';
+import 'vue-tel-input/vue-tel-input.css';
 
-const router = useRouter()
-const nombre = ref('')
-const apellido_paterno = ref('')
-const apellido_materno = ref('')
-const correo = ref('')
-const rol = ref('Personal')
-const mensaje = ref('')
+const router = useRouter();
+const telInputRef = ref(null);
 
-const registrarUsuario = async () => {
-  // Validaciones manuales antes de la llamada a la API
+const nombre = ref('');
+const apellido_paterno = ref('');
+const apellido_materno = ref('');
+const celularCompleto = ref('');
+const correo = ref('');
+const mensaje = ref('');
+
+const registrarPatrocinador = async () => {
   if (!nombre.value) {
-    mensaje.value = 'El nombre es obligatorio.'
-    return
-  }
-  if (!apellido_paterno.value) {
-    mensaje.value = 'El apellido paterno es obligatorio.'
-    return
-  }
-  if (!correo.value) {
-    mensaje.value = 'El correo es obligatorio.'
-    return
+    mensaje.value = 'El nombre es un campo obligatorio.';
+    return;
+  }
+  if (correo.value && (!correo.value.includes('@') || !correo.value.includes('.com'))) {
+    mensaje.value = 'El correo debe ser válido y terminar en .com';
+    return;
   }
   
-  // Expresión regular para validar el correo
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(correo.value)) {
-    mensaje.value = 'Por favor, ingrese un correo electrónico válido.'
-    return
+  if (celularCompleto.value) {
+    const phoneObject = telInputRef.value?.phoneObject;
+    if (phoneObject && !phoneObject.isValid) {
+      mensaje.value = 'El número de celular no es válido para el país seleccionado.';
+      return;
+    }
   }
 
   try {
-    const res = await axios.post('http://localhost:3000/api/usuarios', {
+    const res = await axios.post('http://localhost:3000/api/patrocinadores', {
       nombre: nombre.value,
-      apellido_paterno: apellido_paterno.value,
-      apellido_materno: apellido_materno.value,
-      correo: correo.value,
-      rol: rol.value
-    })
-    mensaje.value = res.data.mensaje
-    nombre.value = apellido_paterno.value = apellido_materno.value = correo.value = ''
-    rol.value = 'Personal'
+      apellido_paterno: apellido_paterno.value || null,
+      apellido_materno: apellido_materno.value || null,
+      celular: telInputRef.value?.phoneObject?.international || celularCompleto.value || null,
+      correo: correo.value || null,
+    });
+    mensaje.value = res.data.mensaje;
+    
+    nombre.value = '';
+    apellido_paterno.value = '';
+    apellido_materno.value = '';
+    celularCompleto.value = '';
+    correo.value = '';
   } catch (error) {
-    mensaje.value = 'Error al registrar usuario'
-    console.error(error)
+    mensaje.value = 'Error al registrar el patrocinador.';
+    console.error(error);
   }
-}
+};
 
-const volver = () => {
-  router.push('/adminDashboard')
-}
+const cancelar = () => {
+  router.push('/adminDashboard');
+};
 </script>
 
 <style scoped>
@@ -159,6 +186,8 @@ body {
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   appearance: none !important;
+  height: auto !important;
+  min-height: 48px !important;
 }
 
 .tukuypacha-input:focus,
@@ -224,5 +253,54 @@ body {
     font-size: 1rem !important;
     padding: 0.6rem 1rem !important;
   }
+}
+
+/* SOLUCIÓN PARA VUE-TEL-INPUT */
+.tukuypacha-input-tel.vue-tel-input {
+  border: 1px solid var(--tukuypacha-border-color) !important;
+  border-radius: 5px !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-weight: 500 !important;
+  color: var(--tukuypacha-dark-text) !important;
+  height: auto !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.tukuypacha-input-tel.vue-tel-input:focus-within {
+  box-shadow: 0 0 0 0.25rem rgba(240, 90, 48, 0.25) !important;
+  border-color: var(--tukuypacha-accent) !important;
+}
+
+.tukuypacha-input-tel.vue-tel-input input {
+  font-family: 'Poppins', sans-serif !important;
+  padding: 0.7rem 1rem !important;
+  border: none !important;
+  background-color: transparent !important;
+  height: 100% !important;
+  flex-grow: 1 !important;
+}
+
+.tukuypacha-input-tel .vti__dropdown {
+  padding: 0 8px !important;
+  border-right: 1px solid var(--tukuypacha-border-color) !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.tukuypacha-input-tel .vti__flag {
+  display: inline-block !important;
+  width: 20px !important;
+  height: 15px !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-image: inherit !important;
+}
+
+.tukuypacha-input-tel .vti__dropdown-list {
+  z-index: 1060 !important;
+  min-width: 300px !important;
 }
 </style>

@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.routes.js'
 import participanteRoutes from './routes/participantes.routes.js'
 import documentoRoutes from './routes/documentos.routes.js'
 import usuarioRoutes from './routes/usuarios.routes.js'
+import patrocinadorRoutes from './routes/patrocinador.routes.js'
 import dotenv from 'dotenv'
 import path from 'path';
 import { fileURLToPath } from 'url'
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/participantes', participanteRoutes)
 app.use('/api/documentos', documentoRoutes)
 app.use('/api/usuarios', usuarioRoutes)
+app.use('/api/patrocinadores', patrocinadorRoutes)
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 
 

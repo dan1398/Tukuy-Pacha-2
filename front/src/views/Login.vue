@@ -21,37 +21,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
 
-const correo = ref('')
-const password = ref('')
-const router = useRouter()
+const correo = ref('');
+const password = ref('');
+const router = useRouter();
 
 async function iniciarSesion() {
   try {
     const response = await axios.post('http://localhost:3000/api/auth/login', {
       correo: correo.value,
-      contraseña: password.value
-    })
+      contraseña: password.value 
+    });
 
-    const { token, usuario } = response.data
-    localStorage.setItem('token', token)
-    localStorage.setItem('usuario', JSON.stringify(usuario))
+    const { token, usuario } = response.data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('usuario', JSON.stringify(usuario));
 
     // Redirigir según rol
-    if (usuario.rol === 'Admin') {
-      router.push('/adminDashboard') 
+    if (usuario.rol === 'Administrador') {
+      router.push('/adminDashboard'); 
     } else if (usuario.rol === 'Personal') {
-      router.push('/personalDashboard')  
+      router.push('/personalDashboard'); 
     } else {
-      alert('Rol no reconocido')
+      alert('Rol no reconocido');
     }
 
   } catch (error) {
-    alert('Credenciales incorrectas')
-    console.error(error)
+    alert('Credenciales incorrectas');
+    console.error(error);
   }
 }
 </script>
@@ -84,7 +84,7 @@ body {
 
 .tukuypacha-login-wrapper {
   /* Mantener este bloque, si es necesario quitar el comentario anidado: */
-  /* background-color: rgba(0, 0, 0, 0.05);  */ /* Puedes descomentarlo si quieres un ligero overlay */
+  /* background-color: rgba(0, 0, 0, 0.05);  */ /* Puedes descomentarlo si quieres un ligero overlay */
 }
 
 /* --- Tarjeta de Inicio de Sesión --- */

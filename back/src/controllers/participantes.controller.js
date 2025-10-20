@@ -1,209 +1,368 @@
 // src/controllers/participantes.controller.js
-
 import pool from '../db.js';
 import fs from 'fs';
 import path from 'path';
 
 // Función para obtener todos los participantes
 export const getParticipantes = async (req, res) => {
-    try {
-        const [rows] = await pool.query('SELECT * FROM Participante');
-        res.json(rows);
-    } catch (err) {
-        console.error('Error al obtener participantes (getParticipantes):', err);
-        res.status(500).json({ mensaje: 'Error al obtener participantes', error: err.message });
-    }
+    try {
+        const [rows] = await pool.query('SELECT * FROM Participante');
+        res.json(rows);
+    } catch (err) {
+        console.error('❌ Error al obtener participantes (getParticipantes):', err);
+        res.status(500).json({ mensaje: 'Error al obtener participantes', error: err.message });
+    }
 };
 
-// **NUEVA FUNCIÓN: Búsqueda tipo Google**
+// Búsqueda de participantes
 export const buscarParticipantes = async (req, res) => {
     const { termino } = req.query;
 
-    if (!termino) {
-        return getParticipantes(req, res);
+    if (!termino || termino.trim().length < 3) {
+        return res.json([]);
     }
 
     const terminoBusqueda = `%${termino}%`;
 
     try {
         const [rows] = await pool.query(
-            `SELECT * FROM Participante 
-             WHERE nombre LIKE ?
-             OR codigo LIKE ?
-             OR CI LIKE ? 
-             OR direccion LIKE ? 
-             OR celular LIKE ?
-             OR nombre_patrocinador LIKE ?
-             OR contacto LIKE ?
-             OR DATE_FORMAT(fecha_nacimiento, '%d/%m/%Y') LIKE ?`, 
+            `SELECT 
+                p.id_participante,
+                p.codigo,
+                p.nombre,
+                p.apellido_paterno,
+                p.apellido_materno,
+                p.CI,
+                p.fecha_nacimiento,
+                p.direccion,
+                p.celular,
+                p.foto,
+                pat.id_patrocinador,
+                pat.nombre AS patrocinador_nombre,
+                pat.apellido_paterno AS patrocinador_apellido_paterno,
+                pat.apellido_materno AS patrocinador_apellido_materno,
+                pat.celular AS patrocinador_celular,
+                pat.correo AS patrocinador_correo
+            FROM 
+                Participante p
+            LEFT JOIN 
+                patrocinador_participante pp ON p.id_participante = pp.id_participante
+            LEFT JOIN 
+                patrocinador pat ON pp.id_patrocinador = pat.id_patrocinador
+            WHERE 
+                p.id_participante = ?
+                OR p.codigo LIKE ?
+                OR p.nombre LIKE ?
+                OR p.apellido_paterno LIKE ?
+                OR p.apellido_materno LIKE ?
+                OR p.CI LIKE ?
+                OR p.direccion LIKE ?
+                OR p.celular LIKE ?
+                OR pat.nombre LIKE ?`,
             [
-                terminoBusqueda, 
-                terminoBusqueda, 
-                terminoBusqueda, 
-                terminoBusqueda, 
-                terminoBusqueda, 
+                termino,
                 terminoBusqueda, 
                 terminoBusqueda,
-                terminoBusqueda 
+                terminoBusqueda,
+                terminoBusqueda,
+                terminoBusqueda,
+                terminoBusqueda,
+                terminoBusqueda,
+                terminoBusqueda,
             ]
         );
         res.json(rows);
     } catch (err) {
-        console.error('Error en la búsqueda de participantes:', err);
+        console.error('❌ Error en la búsqueda de participantes:', err);
         res.status(500).json({ mensaje: 'Error al realizar la búsqueda', error: err.message });
     }
 };
-// Función para obtener un participante por su ID único
+
+// Obtener participante por ID y su patrocinador
 export const getParticipanteById = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query(`
+            SELECT 
+                p.*, 
+                pat.id_patrocinador,
+                pat.nombre AS patrocinador_nombre,
+                pat.apellido_paterno AS patrocinador_apellido_paterno,
+                pat.apellido_materno AS patrocinador_apellido_materno,
+                pat.celular AS patrocinador_celular
+            FROM 
+                Participante p
+            LEFT JOIN 
+                patrocinador_participante pp ON p.id_participante = pp.id_participante
+            LEFT JOIN 
+                patrocinador pat ON pp.id_patrocinador = pat.id_patrocinador
+            WHERE 
+                p.id_participante = ?`, 
+            [id]
+        );
 
-    try {
-        const [rows] = await pool.query('SELECT * FROM Participante WHERE id_participante = ?', [id]);
+        if (rows.length === 0) {
+            return res.status(404).json({ mensaje: 'Participante no encontrado' });
+        }
 
-        if (rows.length === 0) {
-            return res.status(404).json({ mensaje: 'Participante no encontrado' });
-        }
-
-        res.json(rows[0]);
-    } catch (err) {
-        console.error('Error al obtener participante por ID (getParticipanteById):', err);
-        res.status(500).json({ mensaje: 'Error al obtener participante por ID', error: err.message });
-    }
+        res.json(rows[0]);
+    } catch (err) {
+        console.error('❌ Error al obtener participante por ID:', err);
+        res.status(500).json({ mensaje: 'Error al obtener participante por ID', error: err.message });
+    }
 };
 
-// Función para crear un nuevo participante
+
+// Crear nuevo participante y su relación de patrocinio
 export const createParticipante = async (req, res) => {
-    console.log('req.body =', req.body);
-    console.log('req.file =', req.file);
-    const {
-        codigo,
-        nombre,
-        CI,
-        fecha_nacimiento,
-        direccion,
-        celular,
-        nombre_patrocinador,
-        contacto
-    } = req.body;
+    const {
+        id_patrocinador,
+        codigo,
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        CI,
+        fecha_nacimiento,
+        direccion,
+        celular
+    } = req.body;
 
-    const archivo = req.file;
+    const archivo = req.file;
+    const connection = await pool.getConnection();
 
-    try {
-        const nombreFoto = archivo ? archivo.filename : null;
+    try {
+        await connection.beginTransaction();
 
-        const [result] = await pool.query(
-            `INSERT INTO Participante 
-             (codigo, nombre, CI, fecha_nacimiento, direccion, celular, nombre_patrocinador, contacto, foto)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [codigo, nombre, CI, fecha_nacimiento, direccion, celular, nombre_patrocinador, contacto, nombreFoto]
-        );
+        // VALIDACIÓN: Verificar si el código ya existe
+        const [codigoExistente] = await connection.query('SELECT codigo FROM Participante WHERE codigo = ?', [codigo]);
+        if (codigoExistente.length > 0) {
+            if (archivo && fs.existsSync(path.join('uploads', archivo.filename))) {
+                fs.unlinkSync(path.join('uploads', archivo.filename));
+            }
+            await connection.rollback();
+            return res.status(409).json({ mensaje: 'Error al registrar participante', error: 'El código del participante ya existe.' });
+        }
 
-        res.status(201).json({ mensaje: 'Participante registrado', id: result.insertId });
-    } catch (err) {
-        console.error('Error al registrar participante:', err);
-        if (archivo && fs.existsSync(path.join('uploads', archivo.filename))) {
-            fs.unlinkSync(path.join('uploads', archivo.filename));
-            console.log(`Archivo ${archivo.filename} eliminado debido a un error en la base de datos.`);
-        }
-        res.status(500).json({ mensaje: 'Error en el servidor al registrar participante', error: err.message });
-    }
+        const departamentos = ['La Paz', 'Cochabamba', 'Santa Cruz', 'Oruro', 'Potosí', 'Tarija', 'Chuquisaca', 'Beni', 'Pando'];
+        const direccionValida = departamentos.some(depto => direccion.includes(depto));
+        
+        if (!direccionValida) {
+            throw new Error(`La dirección debe incluir un departamento válido de Bolivia: ${departamentos.join(', ')}`);
+        }
+
+        if (!codigo || !nombre || !CI || !direccion || !celular) {
+            throw new Error('Todos los campos obligatorios deben estar completos');
+        }
+
+        const nombreFoto = archivo ? archivo.filename : null;
+        
+        const datosParticipante = {
+            codigo,
+            nombre,
+            apellido_paterno,
+            apellido_materno,
+            CI,
+            fecha_nacimiento,
+            direccion,
+            celular,
+            foto: nombreFoto
+        };
+
+        const [result] = await connection.query('INSERT INTO Participante SET ?', [datosParticipante]);
+        const id_participante = result.insertId;
+
+        if (id_patrocinador) {
+            await connection.query(
+                'INSERT INTO patrocinador_participante (id_patrocinador, id_participante) VALUES (?, ?)',
+                [id_patrocinador, id_participante]
+            );
+        }
+
+        await connection.commit();
+        res.status(201).json({ 
+            mensaje: 'Participante y relación creados',
+            id: id_participante,
+            codigo: codigo
+        });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error('❌ Error al registrar participante:', err);
+        
+        if (archivo && fs.existsSync(path.join('uploads', archivo.filename))) {
+            fs.unlinkSync(path.join('uploads', archivo.filename));
+        }
+        
+        res.status(400).json({ 
+            mensaje: 'Error al registrar participante',
+            error: err.message
+        });
+
+    } finally {
+        connection.release();
+    }
 };
 
-// Función para actualizar un participante existente
+// Actualizar participante y su relación de patrocinio
 export const updateParticipante = async (req, res) => {
-    const { id } = req.params;
-    const {
-        codigo,
-        nombre,
-        CI,
-        fecha_nacimiento,
-        direccion,
-        celular,
-        nombre_patrocinador,
-        contacto
-    } = req.body;
+    const { id } = req.params;
+    const {
+        codigo,
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        CI,
+        fecha_nacimiento,
+        direccion,
+        celular,
+        id_patrocinador
+    } = req.body;
 
-    try {
-        let query = `
-            UPDATE Participante SET
-                codigo = ?, nombre = ?, CI = ?, fecha_nacimiento = ?, direccion = ?,
-                celular = ?, nombre_patrocinador = ?, contacto = ?
-        `;
-        const values = [
-            codigo, nombre, CI, fecha_nacimiento, direccion,
-            celular, nombre_patrocinador, contacto
-        ];
+    const connection = await pool.getConnection();
 
-        if (req.file) {
-            const [rows] = await pool.query('SELECT foto FROM Participante WHERE id_participante = ?', [id]);
-            const fotoAnterior = rows[0]?.foto;
+    try {
+        await connection.beginTransaction();
 
-            if (fotoAnterior) {
-                const rutaAnterior = path.join('uploads', fotoAnterior);
-                if (fs.existsSync(rutaAnterior)) {
-                    fs.unlinkSync(rutaAnterior);
-                    console.log(`Foto anterior ${fotoAnterior} eliminada.`);
-                }
-            }
-            query += `, foto = ?`;
-            values.push(req.file.filename);
-        } else if (req.body.mantener_foto === 'false' || req.body.mantener_foto === false) { 
-            const [rows] = await pool.query('SELECT foto FROM Participante WHERE id_participante = ?', [id]);
-            const fotoAnterior = rows[0]?.foto;
-            if (fotoAnterior) {
-                const rutaAnterior = path.join('uploads', fotoAnterior);
-                if (fs.existsSync(rutaAnterior)) {
-                    fs.unlinkSync(rutaAnterior);
-                    console.log(`Foto anterior ${fotoAnterior} eliminada por solicitud.`);
-                }
-            }
-            query += `, foto = NULL`;
-        }
+        // VALIDACIÓN: Verificar si el código ya existe en otro participante
+        const [codigoExistente] = await connection.query('SELECT id_participante FROM Participante WHERE codigo = ? AND id_participante <> ?', [codigo, id]);
+        if (codigoExistente.length > 0) {
+            await connection.rollback();
+            return res.status(409).json({ mensaje: 'Error al actualizar participante', error: 'El código del participante ya existe.' });
+        }
 
-        query += ` WHERE id_participante = ?`;
-        values.push(id);
+        // Validar la dirección
+        const departamentos = ['La Paz', 'Cochabamba', 'Santa Cruz', 'Oruro', 'Potosí', 'Tarija', 'Chuquisaca', 'Beni', 'Pando'];
+        const direccionValida = departamentos.some(depto => direccion.includes(depto));
+        
+        if (!direccionValida) {
+            throw new Error(`La dirección debe incluir un departamento válido de Bolivia: ${departamentos.join(', ')}`);
+        }
 
-        const [result] = await pool.query(query, values);
+        // Construir y ejecutar la consulta de actualización del participante
+        let query = `
+            UPDATE Participante SET
+                codigo = ?, 
+                nombre = ?, 
+                apellido_paterno = ?, 
+                apellido_materno = ?, 
+                CI = ?, 
+                fecha_nacimiento = ?, 
+                direccion = ?,
+                celular = ?
+        `;
+        const values = [
+            codigo, 
+            nombre, 
+            apellido_paterno || null, 
+            apellido_materno || null, 
+            CI, 
+            fecha_nacimiento, 
+            direccion, 
+            celular
+        ];
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ mensaje: 'Participante no encontrado o los datos son los mismos' });
-        }
+        if (req.file) {
+            const [rows] = await connection.query('SELECT foto FROM Participante WHERE id_participante = ?', [id]);
+            const fotoAnterior = rows[0]?.foto;
+            if (fotoAnterior) {
+                const rutaAnterior = path.join('uploads', fotoAnterior);
+                if (fs.existsSync(rutaAnterior)) fs.unlinkSync(rutaAnterior);
+            }
+            query += `, foto = ?`;
+            values.push(req.file.filename);
+        } else if (req.body.mantener_foto === 'false' || req.body.mantener_foto === false) {
+            const [rows] = await connection.query('SELECT foto FROM Participante WHERE id_participante = ?', [id]);
+            const fotoAnterior = rows[0]?.foto;
+            if (fotoAnterior) {
+                const rutaAnterior = path.join('uploads', fotoAnterior);
+                if (fs.existsSync(rutaAnterior)) fs.unlinkSync(rutaAnterior);
+            }
+            query += `, foto = NULL`;
+        }
 
-        res.json({ mensaje: 'Participante actualizado correctamente' });
-    } catch (err) {
-        console.error('Error al actualizar participante:', err);
-        if (req.file && fs.existsSync(path.join('uploads', req.file.filename))) {
-            fs.unlinkSync(path.join('uploads', req.file.filename));
-            console.log(`Nuevo archivo ${req.file.filename} eliminado debido a un error en la base de datos.`);
-        }
-        res.status(500).json({ mensaje: 'Error al actualizar participante', error: err.message });
-    }
+        query += ` WHERE id_participante = ?`;
+        values.push(id);
+
+        const [result] = await connection.query(query, values);
+        if (result.affectedRows === 0) {
+            await connection.rollback();
+            return res.status(404).json({ mensaje: 'Participante no encontrado' });
+        }
+
+        // Manejar la relación patrocinador_participante
+        const [patrocinioExistente] = await connection.query(
+            'SELECT id_patrocinador FROM patrocinador_participante WHERE id_participante = ?', 
+            [id]
+        );
+
+        if (id_patrocinador) {
+            if (patrocinioExistente.length > 0) {
+                await connection.query(
+                    'UPDATE patrocinador_participante SET id_patrocinador = ? WHERE id_participante = ?',
+                    [id_patrocinador, id]
+                );
+            } else {
+                await connection.query(
+                    'INSERT INTO patrocinador_participante (id_patrocinador, id_participante) VALUES (?, ?)',
+                    [id_patrocinador, id]
+                );
+            }
+        } else {
+            if (patrocinioExistente.length > 0) {
+                await connection.query(
+                    'DELETE FROM patrocinador_participante WHERE id_participante = ?',
+                    [id]
+                );
+            }
+        }
+
+        await connection.commit();
+        res.json({ mensaje: 'Participante y patrocinador actualizados correctamente' });
+    } catch (err) {
+        await connection.rollback();
+        console.error('❌ Error al actualizar participante:', err);
+        if (req.file && fs.existsSync(path.join('uploads', req.file.filename))) {
+            fs.unlinkSync(path.join('uploads', req.file.filename));
+        }
+        res.status(500).json({ mensaje: 'Error al actualizar participante', error: err.message });
+    } finally {
+        connection.release();
+    }
 };
 
-// Función para eliminar un participante
+// Eliminar participante
 export const deleteParticipante = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const [rows] = await pool.query('SELECT foto FROM Participante WHERE id_participante = ?', [id]);
-        const fotoAEliminar = rows[0]?.foto;
+    const { id } = req.params;
+    const connection = await pool.getConnection();
 
-        const [result] = await pool.query('DELETE FROM Participante WHERE id_participante = ?', [id]);
+    try {
+        await connection.beginTransaction();
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ mensaje: 'Participante no encontrado' });
-        }
+        await connection.query('DELETE FROM patrocinador_participante WHERE id_participante = ?', [id]);
 
-        if (fotoAEliminar) {
-            const rutaFoto = path.join('uploads', fotoAEliminar);
-            if (fs.existsSync(rutaFoto)) {
-                fs.unlinkSync(rutaFoto);
-                console.log(`Foto ${fotoAEliminar} eliminada del sistema de archivos.`);
-            }
-        }
+        const [rows] = await connection.query('SELECT foto FROM Participante WHERE id_participante = ?', [id]);
+        const fotoAEliminar = rows[0]?.foto;
 
-        res.json({ mensaje: 'Participante eliminado correctamente' });
-    } catch (err) {
-        console.error('Error al eliminar participante:', err);
-        res.status(500).json({ mensaje: 'Error al eliminar participante', error: err.message });
-    }
+        const [result] = await connection.query('DELETE FROM Participante WHERE id_participante = ?', [id]);
+        if (result.affectedRows === 0) {
+            await connection.rollback();
+            return res.status(404).json({ mensaje: 'Participante no encontrado para eliminar' });
+        }
+
+        if (fotoAEliminar) {
+            const rutaFoto = path.join('uploads', fotoAEliminar);
+            if (fs.existsSync(rutaFoto)) {
+                fs.unlinkSync(rutaFoto);
+            }
+        }
+
+        await connection.commit();
+        res.json({ mensaje: 'Participante y su patrocinio eliminados correctamente' });
+    } catch (err) {
+        await connection.rollback();
+        console.error('❌ Error al eliminar participante:', err);
+        res.status(500).json({ mensaje: 'Error al eliminar participante', error: err.message });
+    } finally {
+        connection.release();
+    }
 };

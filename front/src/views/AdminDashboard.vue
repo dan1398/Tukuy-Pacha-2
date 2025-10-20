@@ -9,8 +9,10 @@
       </div>
 
       <div class="sidebar-buttons flex-grow-1 d-flex flex-column">
-        <button class="btn-tukuypacha-sidebar w-100 mb-2" @click="irARegistrar">Registrar Nuevo</button>
-        <button class="btn-tukuypacha-sidebar w-100 mb-auto" @click="mostrarUsuarios = true">Gestionar Usuarios</button>
+        <button class="btn-tukuypacha-sidebar w-100 mb-2" @click="irARegistrar">Registrar Nuevo Usuario</button>
+        <button class="btn-tukuypacha-sidebar w-100 mb-2" @click="mostrarUsuarios = true">Gestionar Usuarios</button>
+        <button class="btn-tukuypacha-sidebar w-100 mb-2" @click="irARegistrarPatrocinador">Registrar Nuevo Patrocinador</button>
+        <button class="btn-tukuypacha-sidebar w-100 mb-auto" @click="mostrarPatrocinadores = true">Gestionar Patrocinadores</button>
         <button class="btn btn-tukuypacha-danger w-100 mt-2" @click="cerrarSesion">Cerrar Sesión</button>
       </div>
     </div>
@@ -24,72 +26,123 @@
         </div>
         <div class="card-body">
           <div class="input-group mb-3">
-            <input v-model="busquedaId" type="text" placeholder="Buscar" class="form-control admin-input" />
-            <button class="btn-tukuypacha" @click="buscarParticipante">Buscar</button>
+            <input v-model="busquedaId" type="text" placeholder="Buscar por Nombre, CI, Código, Celular o Patrocinador" class="form-control admin-input" />
+            
+            <div class="d-flex align-items-center ms-2" v-if="participanteSeleccionado">
+              <button
+                class="btn-tukuypacha-outline me-2"
+                @click="irAEditarParticipante(participanteSeleccionado.id_participante)"
+              >
+                Editar Participante
+              </button>
+              
+              <button
+                class="btn-tukuypacha-success"
+                @click="descargarPDF"
+              >
+                Descargar PDF
+              </button>
+            </div>
+            
             <button
-              class="ms-2"
-              :class="participante ? 'btn-tukuypacha-outline' : 'btn-tukuypacha'"
-              @click="participante ? irAEditarParticipante(participante.id_participante) : router.push('/nuevo-participante')"
+              v-else
+              class="btn-tukuypacha ms-2"
+              @click="router.push('/nuevo-participante')"
             >
-              {{ participante ? 'Editar Participante' : 'Nuevo Participante' }}
+              Nuevo Participante
             </button>
+
           </div>
 
-          <div v-if="participante" class="card mt-4 participant-card">
+          <div v-if="busquedaId.length >= 3 && participantes.length > 0 && !participanteSeleccionado">
+            <h6 class="mt-4">Resultados de la búsqueda:</h6>
+            <ul class="list-group list-group-flush admin-list-group">
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center admin-list-item"
+                v-for="p in participantes"
+                :key="p.id_participante"
+                @click="seleccionarParticipante(p)"
+              >
+                <div class="d-flex align-items-center">
+                  <img
+                    v-if="p.foto"
+                    :src="`http://localhost:3000/uploads/${p.foto}`"
+                    alt="Foto del participante"
+                    class="img-thumbnail me-3"
+                    style="width: 50px; height: 50px; object-fit: cover;"
+                  />
+                  <div class="doc-file-name">
+                    {{ p.nombre }} {{ p.apellido_paterno }} {{ p.apellido_materno }}
+                    <small class="text-muted d-block">Código: {{ p.codigo }}</small>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div v-else-if="busquedaId.length >= 3 && participantes.length === 0" class="alert alert-info mt-4" role="alert">
+            No se encontraron participantes.
+          </div>
+
+          <div v-if="participanteSeleccionado" class="card mt-4 participant-card" ref="cardParticipante">
             <div class="card-body">
-              <h5 class="card-title participant-title">{{ participante.nombre }}</h5>
-              <div v-if="participante.foto" class="text-center mb-3">
-                <img :src="`http://localhost:3000/uploads/${participante.foto}`" alt="Foto del participante" class="img-thumbnail participant-photo" />
+              <h5 class="card-title participant-title">
+                {{ participanteSeleccionado.nombre}} {{ participanteSeleccionado.apellido_paterno }} {{ participanteSeleccionado.apellido_materno }}
+              </h5>
+              <div v-if="participanteSeleccionado.foto" class="text-center mb-3">
+                <img :src="`http://localhost:3000/uploads/${participanteSeleccionado.foto}`" alt="Foto del participante" class="img-thumbnail participant-photo" />
               </div>
               <div class="row">
-                <div class="col-md-6"><p><strong>Código:</strong> {{ participante.codigo }}</p></div>
-                <div class="col-md-6"><p><strong>CI:</strong> {{ participante.CI }}</p></div>
-                <div class="col-md-6"><p><strong>Fecha de nacimiento:</strong> {{ new Date(participante.fecha_nacimiento).toLocaleDateString() }}</p></div>
-                <div class="col-md-6"><p><strong>Dirección:</strong> {{ participante.direccion }}</p></div>
-                <div class="col-md-6"><p><strong>Celular:</strong> {{ participante.celular }}</p></div>
-                <div class="col-md-6"><p><strong>Patrocinador:</strong> {{ participante.nombre_patrocinador }}</p></div>
-                <div class="col-md-6"><p><strong>Contacto Patrocinador:</strong> {{ participante.contacto }}</p></div>
+                <div class="col-md-6"><p><strong>Código:</strong> {{ participanteSeleccionado.codigo }}</p></div>
+                <div class="col-md-6"><p><strong>CI:</strong> {{ participanteSeleccionado.CI }}</p></div>
+                <div class="col-md-6"><p><strong>Fecha de nacimiento:</strong> {{ new Date(participanteSeleccionado.fecha_nacimiento).toLocaleDateString() }}</p></div>
+                <div class="col-md-6"><p><strong>Dirección:</strong> {{ participanteSeleccionado.direccion }}</p></div>
+                <div class="col-md-6"><p><strong>Celular:</strong> {{ participanteSeleccionado.celular }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_nombre"><p><strong>Nombre del Patrocinador:</strong> {{ participanteSeleccionado.patrocinador_nombre }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_apellido_paterno"><p><strong>Apellido Paterno:</strong> {{ participanteSeleccionado.patrocinador_apellido_paterno }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_apellido_materno"><p><strong>Apellido Materno:</strong> {{ participanteSeleccionado.patrocinador_apellido_materno }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_celular"><p><strong>Celular:</strong> {{ participanteSeleccionado.patrocinador_celular }}</p></div>
+                <div class="col-md-6" v-if="participanteSeleccionado.patrocinador_correo"><p><strong>Correo Electrónico:</strong> {{ participanteSeleccionado.patrocinador_correo }}</p></div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div v-if="documentos && documentos.length" class="card shadow-sm mb-4 admin-card">
-        <div class="card-header admin-card-header">
-          <h5>Documentos Relacionados</h5>
-        </div>
-        <div class="card-body">
-          <ul class="list-group list-group-flush admin-list-group">
-            <li
-              class="list-group-item d-flex justify-content-between align-items-start admin-list-item"
-              v-for="doc in documentos"
-              :key="doc.id_documento"
-            >
-              <div>
-                <div class="doc-file-name"><strong>Archivo:</strong> {{ doc.nombre_archivo }}</div>
-                <div class="text-muted small"><strong>Tipo:</strong> {{ doc.tipo_documento }}</div>
-                <div class="text-muted small">
-                  <strong>Fecha de subida:</strong>
-                  {{ new Date(doc.fecha_subida).toLocaleDateString() }}
-                </div>
-              </div>
-              <div class="btn-group btn-group-sm">
-                <a
-                  v-if="!doc.ruta_archivo.endsWith('.xls') && !doc.ruta_archivo.endsWith('.xlsx')"
-                  :href="`http://localhost:3000/uploads/${doc.ruta_archivo}`"
-                  target="_blank"
-                  class="btn btn-sm btn-tukuypacha-outline"
+          
+          <div v-if="participanteSeleccionado && documentos.length > 0" class="card shadow-sm mb-4 admin-card">
+            <div class="card-header admin-card-header">
+              <h5>Documentos Relacionados</h5>
+            </div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush admin-list-group">
+                <li
+                  class="list-group-item d-flex justify-content-between align-items-start admin-list-item"
+                  v-for="doc in documentos"
+                  :key="doc.id_documento"
                 >
-                  Ver
-                </a>
-                <a
-                  :href="`http://localhost:3000/api/documentos/download/${doc.ruta_archivo}`"
-                  class="btn btn-sm btn-tukuypacha-success ms-2"
-                >Descargar</a>
-              </div>
-            </li>
-          </ul>
+                  <div>
+                    <div class="doc-file-name"><strong>Archivo:</strong> {{ doc.nombre_archivo }}</div>
+                    <div class="text-muted small"><strong>Tipo:</strong> {{ doc.tipo_documento }}</div>
+                    <div class="text-muted small">
+                      <strong>Fecha de subida:</strong>
+                      {{ new Date(doc.fecha_subida).toLocaleDateString() }}
+                    </div>
+                  </div>
+                  <div class="btn-group btn-group-sm">
+                    <a
+                      v-if="!doc.ruta_archivo.endsWith('.xls') && !doc.ruta_archivo.endsWith('.xlsx')"
+                      :href="`http://localhost:3000/uploads/${doc.ruta_archivo}`"
+                      target="_blank"
+                      class="btn btn-sm btn-tukuypacha-outline"
+                    >
+                      Ver
+                    </a>
+                    <a
+                      :href="`http://localhost:3000/api/documentos/download/${doc.ruta_archivo}`"
+                      class="btn btn-sm btn-tukuypacha-success ms-2"
+                    >Descargar</a>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -110,8 +163,9 @@
                 <table class="table table-striped table-hover admin-table">
                   <thead>
                     <tr>
-                      <th class="text-center">ID</th>
                       <th class="text-center">Nombre</th>
+                      <th class="text-center">Apellido Paterno</th>
+                      <th class="text-center">Apellido Materno</th>
                       <th class="text-center">Correo</th>
                       <th class="text-center">Rol</th>
                       <th class="text-center">Restablecer Contraseña</th>
@@ -119,11 +173,18 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="u in usuarios" :key="u.id_usuario">
-                      <td>{{ u.id_usuario }}</td>
+                    <tr v-for="u in usuarios" :key="u.id_usuario" :data-id="u.id_usuario">
                       <td>
                         <input v-if="editandoId === u.id_usuario" v-model="u.nombre" class="form-control form-control-sm admin-input-table" />
                         <span v-else>{{ u.nombre }}</span>
+                      </td>
+                      <td>
+                        <input v-if="editandoId === u.id_usuario" v-model="u.apellido_paterno" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ u.apellido_paterno }}</span>
+                      </td>
+                      <td>
+                        <input v-if="editandoId === u.id_usuario" v-model="u.apellido_materno" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ u.apellido_materno }}</span>
                       </td>
                       <td>
                         <input v-if="editandoId === u.id_usuario" v-model="u.correo" class="form-control form-control-sm admin-input-table" />
@@ -172,6 +233,102 @@
         </div>
       </div>
     </div>
+
+    <div class="admin-modal-overlay" v-if="mostrarPatrocinadores">
+      <div class="modal-dialog admin-modal-dialog admin-modal-expanded">
+        <div class="modal-content admin-modal-content">
+          <div class="modal-header admin-modal-header">
+            <h5 class="modal-title admin-modal-title">Lista de Patrocinadores</h5>
+            <button type="button" class="btn-close" @click="mostrarPatrocinadores = false"></button>
+          </div>
+          <div class="modal-body admin-modal-body">
+            <div v-if="isLoadingPatrocinadores" class="text-center py-5">
+              Cargando patrocinadores...
+            </div>
+            <div v-else>
+              <div class="table-responsive-custom">
+                <table class="table table-striped table-hover admin-table">
+                  <thead>
+                    <tr>
+                      <th class="text-center">Nombre</th>
+                      <th class="text-center">Apellido Paterno</th>
+                      <th class="text-center">Apellido Materno</th>
+                      <th class="text-center">Celular</th>
+                      <th class="text-center">Correo</th>
+                      <th class="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="p in patrocinadores" :key="p.id_patrocinador" :data-id="p.id_patrocinador">
+                      <td>
+                        <input v-if="editandoPatrocinadorId === p.id_patrocinador" v-model="p.nombre" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ p.nombre }}</span>
+                      </td>
+                      <td>
+                        <input v-if="editandoPatrocinadorId === p.id_patrocinador" v-model="p.apellido_paterno" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ p.apellido_paterno }}</span>
+                      </td>
+                      <td>
+                        <input v-if="editandoPatrocinadorId === p.id_patrocinador" v-model="p.apellido_materno" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ p.apellido_materno }}</span>
+                      </td>
+                      <td>
+                        <div v-if="editandoPatrocinadorId === p.id_patrocinador" class="position-relative">
+                          <VueTelInput
+                            :modelValue="p.celular"
+                            @update:modelValue="(value) => {
+                              if (typeof value === 'object') {
+                                p.celular = value.international || '';
+                              } else {
+                                p.celular = value;
+                              }
+                            }"
+                            mode="international"
+                            :class="{'is-invalid': patrocinadorValidacionEstado[p.id_patrocinador] === false}"
+                            @validate="onPatrocinadorCelularValidate(p.id_patrocinador, $event)"
+                            @blur="onPatrocinadorCelularBlur(p.id_patrocinador)"
+                            :inputOptions="{
+                              placeholder: 'Celular',
+                              class: 'form-control form-control-sm admin-input-table'
+                            }"
+                          ></VueTelInput>
+                          <div class="invalid-feedback d-block" v-if="patrocinadorValidacionEstado[p.id_patrocinador] === false">
+                            Número inválido.
+                          </div>
+                        </div>
+                        <span v-else>{{ p.celular }}</span>
+                      </td>
+                      <td>
+                        <input v-if="editandoPatrocinadorId === p.id_patrocinador" v-model="p.correo" class="form-control form-control-sm admin-input-table" />
+                        <span v-else>{{ p.correo }}</span>
+                      </td>
+                      <td class="actions-cell">
+                        <button class="btn btn-sm btn-tukuypacha-outline me-1" v-if="editandoPatrocinadorId !== p.id_patrocinador" @click="iniciarEdicionPatrocinador(p)" title="Editar">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-tukuypacha me-1" v-else @click="guardarCambiosPatrocinador(p)" title="Guardar cambios">
+                          <i class="fas fa-save"></i>
+                        </button>
+                        <button class="btn btn-sm btn-tukuypacha-secondary me-1" v-if="editandoPatrocinadorId === p.id_patrocinador" @click="cancelarEdicionPatrocinador(p)" title="Cancelar">
+                          <i class="fas fa-times"></i>
+                        </button>
+                        <button
+                          class="btn btn-sm btn-tukuypacha-danger"
+                          @click="eliminarPatrocinador(p.id_patrocinador)"
+                          title="Eliminar"
+                        >
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -180,17 +337,31 @@ import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import logo from '../images/logo-top2.png';
+import { VueTelInput } from 'vue-tel-input';
+import 'vue-tel-input/vue-tel-input.css';
+import html2pdf from 'html2pdf.js';
 
 const router = useRouter()
 const usuario = ref({})
 const busquedaId = ref('')
-const participante = ref(null)
+const participantes = ref([]);
+const participanteSeleccionado = ref(null);
 const documentos = ref([])
 const mostrarUsuarios = ref(false)
 const usuarios = ref([])
 const editandoId = ref(null)
 const usuarioOriginal = ref(null);
 const isLoading = ref(false);
+
+const mostrarPatrocinadores = ref(false);
+const patrocinadores = ref([]);
+const editandoPatrocinadorId = ref(null);
+const patrocinadorOriginal = ref(null);
+const isLoadingPatrocinadores = ref(false);
+const patrocinadorValidacionEstado = ref({});
+let searchTimeout = null;
+
+const cardParticipante = ref(null);
 
 onMounted(() => {
   const userData = localStorage.getItem('usuario')
@@ -209,12 +380,93 @@ watch(mostrarUsuarios, async (value) => {
       usuarios.value = res.data
     } catch (err) {
       console.error('Error al cargar usuarios:', err)
-      alert('Error al cargar usuarios');
+      console.error('No se pudo cargar la lista de usuarios.');
     } finally {
       isLoading.value = false;
     }
   }
 })
+
+watch(mostrarPatrocinadores, async (value) => {
+  if (value) {
+    isLoadingPatrocinadores.value = true;
+    try {
+      const res = await axios.get('http://localhost:3000/api/patrocinadores')
+      patrocinadores.value = res.data;
+    } catch (err) {
+      console.error('Error al cargar patrocinadores:', err)
+      console.error('No se pudo cargar la lista de patrocinadores.');
+    } finally {
+      isLoadingPatrocinadores.value = false;
+    }
+  }
+});
+
+watch(busquedaId, (newValue) => {
+  if (!newValue || newValue.trim().length < 3) {
+    participantes.value = [];
+    participanteSeleccionado.value = null;
+    documentos.value = [];
+    return;
+  }
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    buscarParticipantes();
+  }, 300);
+});
+
+const buscarParticipantes = async () => {
+  try {
+    const res = await axios.get(
+      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
+    );
+    participantes.value = res.data;
+    participanteSeleccionado.value = null;
+
+    if (participantes.value.length === 1) {
+      seleccionarParticipante(participantes.value[0]);
+    } else {
+      documentos.value = [];
+    }
+
+  } catch (err) {
+    console.error('Error en buscarParticipantes:', err);
+    participantes.value = [];
+    participanteSeleccionado.value = null;
+    documentos.value = [];
+  }
+};
+
+const seleccionarParticipante = async (participante) => {
+  participanteSeleccionado.value = participante;
+  
+  try {
+    const docRes = await axios.get(
+      `http://localhost:3000/api/documentos?participanteId=${participante.id_participante}`
+    );
+    documentos.value = docRes.data;
+  } catch (err) {
+    console.error('Error al obtener documentos:', err);
+    documentos.value = [];
+  }
+};
+
+const descargarPDF = () => {
+  if (!participanteSeleccionado.value || !cardParticipante.value) {
+    alert('Por favor, seleccione un participante para descargar el PDF.');
+    return;
+  }
+
+  const opt = {
+    margin: 1,
+    filename: `Participante_${participanteSeleccionado.value.codigo}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true }, // Se añade useCORS: true aquí
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  html2pdf().from(cardParticipante.value).set(opt).save();
+};
 
 const iniciarEdicion = (u) => {
   editandoId.value = u.id_usuario;
@@ -233,9 +485,7 @@ const cancelarEdicion = (usuarioEnTabla) => {
 };
 
 const eliminarUsuarioLocal = async (id) => {
-  const confirmar = confirm('¿Estás seguro de eliminar este usuario?')
-  if (!confirmar) return
-
+  console.log('Solicitud de eliminación de usuario para el ID:', id);
   try {
     await axios.delete(`http://localhost:3000/api/usuarios/${id}`)
     usuarios.value = usuarios.value.filter(u => u.id_usuario !== id)
@@ -243,23 +493,36 @@ const eliminarUsuarioLocal = async (id) => {
     console.log('Usuario eliminado de la base de datos')
   } catch (err) {
     console.error('Error al eliminar usuario:', err)
-    alert('No se pudo eliminar el usuario')
+    console.error('No se pudo eliminar el usuario');
   }
 }
+
+const getPatrocinadores = async () => {
+  isLoadingPatrocinadores.value = true;
+  try {
+    const res = await axios.get('http://localhost:3000/api/patrocinadores');
+    patrocinadores.value = res.data;
+  } catch (err) {
+    console.error('Error al cargar patrocinadores:', err);
+  } finally {
+    isLoadingPatrocinadores.value = false;
+  }
+};
 
 const guardarCambios = async (usuarioEditado) => {
   try {
     const dataToUpdate = {
       nombre: usuarioEditado.nombre,
       correo: usuarioEditado.correo,
+      apellido_paterno: usuarioEditado.apellido_paterno,
+      apellido_materno: usuarioEditado.apellido_materno,
       rol: usuarioEditado.rol
     };
-    
     await axios.put(`http://localhost:3000/api/usuarios/${usuarioEditado.id_usuario}`, dataToUpdate);
     console.log('Cambios de usuario guardados en la base de datos');
   } catch (err) {
     console.error('Error al guardar cambios:', err);
-    alert('No se pudieron guardar los cambios');
+    console.error('No se pudieron guardar los cambios');
   } finally {
     editandoId.value = null;
     usuarioOriginal.value = null;
@@ -267,15 +530,13 @@ const guardarCambios = async (usuarioEditado) => {
 };
 
 const restablecerContrasena = async (id) => {
-  const confirmar = confirm('¿Estás seguro de restablecer la contraseña de este usuario? Se generará una nueva y se enviará a su correo electrónico.');
-  if (!confirmar) return;
-
+  console.log('Solicitud de restablecimiento de contraseña para el ID:', id);
   try {
     const res = await axios.post(`http://localhost:3000/api/usuarios/${id}/restablecer-contrasena`);
-    alert(res.data.mensaje);
+    console.log(res.data.mensaje);
   } catch (err) {
     console.error('Error al restablecer contraseña:', err);
-    alert('No se pudo restablecer la contraseña. Revisa el correo del usuario.');
+    console.error('No se pudo restablecer la contraseña. Revisa el correo del usuario.');
   }
 };
 
@@ -290,39 +551,75 @@ const irARegistrar = () => {
   router.push('/registrar')
 }
 
+const irARegistrarPatrocinador = () => {
+  router.push('/registrarPatrocinador')
+}
+
 const irAEditarParticipante = (id) => {
   router.push(`/editar-participante/${id}`);
 };
 
-const buscarParticipante = async () => {
-  if (!busquedaId.value.trim()) {
-    participante.value = null
-    documentos.value = []
-    return
-  }
-  try {
-    const res = await axios.get(
-      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
-    )
+const iniciarEdicionPatrocinador = (p) => {
+  editandoPatrocinadorId.value = p.id_patrocinador;
+  patrocinadorOriginal.value = { ...p };
+  patrocinadorValidacionEstado.value[p.id_patrocinador] = true;
+};
 
-    if (res.data.length > 0) {
-      const encontrado = res.data[0]
-      participante.value = encontrado
-
-      const docRes = await axios.get(
-        `http://localhost:3000/api/documentos?participanteId=${encontrado.id_participante}`
-      )
-      documentos.value = docRes.data
-    } else {
-      participante.value = null
-      documentos.value = []
+const cancelarEdicionPatrocinador = (patrocinadorEnTabla) => {
+  if (patrocinadorOriginal.value && patrocinadorOriginal.value.id_patrocinador === patrocinadorEnTabla.id_patrocinador) {
+    const index = patrocinadores.value.findIndex(p => p.id_patrocinador === patrocinadorEnTabla.id_patrocinador);
+    if (index !== -1) {
+      patrocinadores.value[index] = { ...patrocinadorOriginal.value };
     }
-  } catch (err) {
-    console.error('Error en buscarParticipante:', err)
-    participante.value = null;
-    documentos.value = [];
   }
-}
+  editandoPatrocinadorId.value = null;
+  patrocinadorOriginal.value = null;
+  delete patrocinadorValidacionEstado.value[patrocinadorEnTabla.id_patrocinador];
+};
+
+const guardarCambiosPatrocinador = async (patrocinadorEditado) => {
+  if (patrocinadorValidacionEstado.value[patrocinadorEditado.id_patrocinador] === false) {
+    return;
+  }
+
+  try {
+    const dataToUpdate = {
+      nombre: patrocinadorEditado.nombre,
+      apellido_paterno: patrocinadorEditado.apellido_paterno,
+      apellido_materno: patrocinadorEditado.apellido_materno,
+      celular: patrocinadorEditado.celular,
+      correo: patrocinadorEditado.correo
+    };
+    await axios.put(`http://localhost:3000/api/patrocinadores/${patrocinadorEditado.id_patrocinador}`, dataToUpdate);
+    console.log('Cambios de patrocinador guardados en la base de datos');
+  } catch (err) {
+    console.error('Error al guardar cambios del patrocinador:', err);
+    console.error('No se pudieron guardar los cambios del patrocinador');
+  } finally {
+    editandoPatrocinadorId.value = null;
+    patrocinadorOriginal.value = null;
+  }
+};
+
+const onPatrocinadorCelularValidate = (id, { isValid }) => {
+  patrocinadorValidacionEstado.value[id] = isValid;
+};
+
+const onPatrocinadorCelularBlur = (id) => {
+  // Aquí puedes dejar la validación visible o ajustarla a tu gusto
+};
+
+const eliminarPatrocinador = async (id) => {
+  try {
+    await axios.delete(`http://localhost:3000/api/patrocinadores/${id}`);
+    patrocinadores.value = patrocinadores.value.filter(p => p.id_patrocinador !== id);
+    if (editandoPatrocinadorId.value === id) editandoPatrocinadorId.value = null;
+    console.log('Patrocinador eliminado de la base de datos');
+  } catch (err) {
+    console.error('Error al eliminar patrocinador:', err);
+    console.error('No se pudo eliminar el patrocinador');
+  }
+};
 </script>
 
 <style>
@@ -534,360 +831,196 @@ body {
 }
 
 .participant-title {
-  color: var(--tukuypacha-button-bg);
+  color: var(--tukuypacha-accent);
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .participant-photo {
-  max-height: 180px;
-  width: auto;
-  border-radius: 8px;
-  border: 2px solid var(--tukuypacha-border-color);
+  width: 150px;
+  height: 150px;
   object-fit: cover;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border: 4px solid var(--tukuypacha-border-color);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .participant-card p {
   margin-bottom: 0.5rem;
-  font-size: 0.95rem;
-  line-height: 1.4;
+  font-size: 1rem;
 }
 
-/* --- Lista de Documentos --- */
-.admin-list-group {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.admin-list-item {
-  background-color: var(--tukuypacha-card-bg);
-  border-color: var(--tukuypacha-border-color);
-  padding: 1rem 1.5rem;
-  font-size: 0.95rem;
-}
-
-.admin-list-item:hover {
-  background-color: var(--tukuypacha-hover-bg);
-}
-
-.doc-file-name {
+.participant-card strong {
+  color: var(--tukuypacha-accent);
   font-weight: 600;
-  color: var(--tukuypacha-dark-text);
 }
 
-/* --- Modal de Usuarios --- */
+/* --- Resultados de Búsqueda y Listas --- */
+.admin-list-group .list-group-item {
+  cursor: pointer;
+  background-color: var(--tukuypacha-card-bg);
+  border: 1px solid var(--tukuypacha-border-color);
+  margin-bottom: 0.5rem;
+  border-radius: 5px;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-list-group .list-group-item:hover {
+  background-color: var(--tukuypacha-hover-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Modales --- */
 .admin-modal-overlay {
-  background-color: rgba(0, 0, 0, 0.6);
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1050;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
-  overflow-y: auto;
+  align-items: center;
+  z-index: 1050;
+  transition: all 0.3s ease;
 }
 
 .admin-modal-dialog {
-  width: 90%;
-  max-width: 500px;
-  margin: 1.75rem auto;
-  transition: width 0.3s ease, max-width 0.3s ease;
-}
-
-/* Reglas para pantallas grandes (desktops) */
-@media (min-width: 992px) {
-  .admin-modal-dialog {
-    max-width: 1200px;
-  }
+  max-width: 800px;
+  transition: transform 0.3s ease;
 }
 
 .admin-modal-expanded {
-  max-width: 95%;
+  max-width: 1200px;
 }
 
 .admin-modal-content {
-  border-radius: 10px;
-  background-color: var(--tukuypacha-card-bg);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
   border: none;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: var(--tukuypacha-card-bg);
 }
 
 .admin-modal-header {
   background-color: var(--tukuypacha-accent);
   color: #fff;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  padding: 1rem 1.5rem;
   border-bottom: none;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
-.admin-modal-header .modal-title {
-  color: #fff;
+.admin-modal-title {
   font-weight: 600;
-  font-size: 1.5rem;
-}
-
-.admin-modal-header .btn-close {
-  filter: invert(1);
-  opacity: 1;
 }
 
 .admin-modal-body {
-  padding: 1.5rem;
+  padding: 2rem;
 }
 
-/* --- Tabla de Usuarios --- */
-.table-responsive-custom {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.btn-close {
+  filter: invert(1);
 }
 
-.admin-table {
-  width: 100%;
-  min-width: 600px;
-  border-collapse: collapse;
-}
-
+/* --- Tablas en Modales --- */
 .admin-table th {
-  background-color: var(--tukuypacha-accent);
-  color: white;
-  padding: 12px 8px;
-  text-align: left;
+  background-color: var(--tukuypacha-bg-light);
+  color: var(--tukuypacha-dark-text);
   font-weight: 600;
-}
-
-.admin-table td {
-  padding: 10px 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 2px solid var(--tukuypacha-accent);
+  padding: 0.75rem;
   vertical-align: middle;
 }
 
-.admin-table tr:hover {
-  background-color: rgba(0,0,0,0.02);
+.admin-table td {
+  vertical-align: middle;
+  padding: 0.75rem;
 }
 
-.actions-cell {
-  white-space: nowrap;
-}
-
-.admin-input-table {
-  font-size: 0.85rem !important;
-  padding: 0.4rem 0.7rem !important;
-  border-radius: 4px !important;
-  border: 1px solid var(--tukuypacha-border-color) !important;
-  box-shadow: none !important;
-  transition: border-color 0.2s ease;
-  width: 100%;
-}
-
+.admin-input-table,
 .admin-select-table {
-  font-size: 0.85rem !important;
-  padding: 0.4rem 0.7rem !important;
-  border-radius: 4px !important;
-  border: 1px solid var(--tukuypacha-border-color) !important;
-  box-shadow: none !important;
+  border-color: var(--tukuypacha-border-color);
   transition: border-color 0.2s ease;
-  width: 100%;
-  min-width: 120px;
 }
-
-/* Regla para dar espacio a las columnas de la tabla */
-.admin-table th:nth-child(5), /* Restablecer Contraseña */
-.admin-table td:nth-child(5) {
-  width: 150px;
-}
-
-.admin-table th:last-child, /* Acciones */
-.admin-table td:last-child {
-  width: 100px;
-}
-
 
 .admin-input-table:focus,
 .admin-select-table:focus {
-  border-color: var(--tukuypacha-accent) !important;
-  box-shadow: 0 0 0 0.2rem rgba(240, 90, 48, 0.2) !important;
+  border-color: var(--tukuypacha-accent);
+  box-shadow: 0 0 0 0.2rem rgba(240, 90, 48, 0.2);
 }
 
-.btn-tukuypacha-secondary {
-  background-color: var(--tukuypacha-secondary-btn) !important;
-  border-color: var(--tukuypacha-secondary-btn) !important;
-  color: #fff !important;
-  font-weight: 500;
+.table-responsive-custom {
+  overflow-x: auto;
+}
+
+/* Estilos para vue-tel-input */
+.vue-tel-input {
+  border: 1px solid var(--tukuypacha-border-color) !important;
   border-radius: 5px !important;
-  padding: 0.6rem 1.2rem !important;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  box-shadow: none !important;
+  font-family: 'Poppins', sans-serif;
 }
 
-.btn-tukuypacha-secondary:hover {
-  background-color: #5a6268 !important;
-  border-color: #545b62 !important;
-  opacity: 0.9;
+.vue-tel-input:focus-within {
+  box-shadow: 0 0 0 0.25rem rgba(240, 90, 48, 0.2) !important;
+  border-color: var(--tukuypacha-accent) !important;
 }
 
-.admin-table .btn-sm {
-  min-width: 32px;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+.vue-tel-input .dropdown {
+  border-right: 1px solid var(--tukuypacha-border-color);
+}
+
+.vue-tel-input .dropdown:hover {
+  background-color: var(--tukuypacha-hover-bg);
+}
+
+.vue-tel-input .dropdown-menu {
+  background-color: var(--tukuypacha-card-bg);
+  border: 1px solid var(--tukuypacha-border-color);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.vue-tel-input .input-tel {
+  border: none !important;
+}
+
+.vue-tel-input.is-invalid {
+  border-color: var(--tukuypacha-danger) !important;
+}
+.vue-tel-input.is-invalid:focus-within {
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.2) !important;
+}
+
+/* --- Ajustes generales para tablas de usuarios y patrocinadores --- */
+.admin-table th, 
+.admin-table td {
+  vertical-align: middle;
+  text-align: center;
+  padding: 0.6rem;
+}
+
+/* --- Botones de acciones uniformes --- */
+.actions-cell .btn {
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
 }
 
-.admin-table .btn-sm i {
-  margin: 0;
-  font-size: 0.9rem;
+/* --- Iconos con tamaño uniforme --- */
+.actions-cell .btn i {
+  font-size: 14px;
 }
 
-[title] {
-  position: relative;
+/* --- Separación entre botones dentro de la celda de acciones --- */
+.actions-cell .btn + .btn {
+  margin-left: 4px;
 }
 
-[title]:hover::after {
-  content: attr(title);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 100;
+/* --- Hover más visible para las filas de la tabla --- */
+.admin-table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
-/* --- Responsive adjustments --- */
-@media (max-width: 768px) {
-  .admin-dashboard-wrapper {
-    flex-direction: column;
-  }
-
-  .admin-sidebar {
-    width: 100%;
-    min-height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--tukuypacha-border-color);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    padding: 1rem !important;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .admin-logo {
-    max-height: 70px;
-    margin-bottom: 1rem !important;
-    margin-right: 0;
-  }
-
-  .sidebar-profile-info {
-    text-align: center;
-    margin-bottom: 1rem !important;
-    padding-bottom: 0.5rem;
-    border-bottom: none;
-  }
-
-  .sidebar-buttons {
-    width: 80%;
-    align-items: center;
-  }
-  .admin-sidebar .btn-tukuypacha-sidebar,
-  .admin-sidebar .btn-tukuypacha-danger {
-    width: 100% !important;
-    margin-bottom: 0.5rem !important;
-  }
-  .admin-sidebar .btn-tukuypacha-danger {
-    margin-top: 0.5rem !important;
-  }
-
-  .admin-main-content {
-    padding: 1.5rem !important;
-  }
-
-  .admin-main-title {
-    color: var(--tukuypacha-accent);
-    font-weight: 700;
-    font-size: 1.7rem;
-    margin-bottom: 1.5rem !important;
-    text-align: center;
-  }
-
-  .admin-card-header h5 {
-    font-size: 1.1rem;
-  }
-
-  .admin-input {
-    font-size: 1rem;
-    padding: 0.5rem 0.8rem;
-  }
-
-  .btn-tukuypacha,
-  .btn-tukuypacha-outline,
-  .btn-tukuypacha-success {
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-  }
-
-  .participant-title {
-    color: var(--tukuypacha-button-bg);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-    text-align: center;
-  }
-
-  .participant-photo {
-    max-height: 150px;
-  }
-
-  .participant-card p {
-    font-size: 0.9rem;
-  }
-
-  .admin-list-item {
-    padding: 1rem !important;
-    font-size: 0.9rem;
-  }
-
-  .admin-modal-dialog {
-    width: 95%;
-    max-width: 95%;
-    margin: 1rem auto;
-  }
-
-  .admin-modal-header h5 {
-    font-size: 1.3rem;
-  }
-
-  .table-responsive-custom {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .admin-table {
-    min-width: 600px;
-    border-collapse: collapse;
-    width: 100%;
-  }
-  
-  .admin-table th,
-  .admin-table td {
-    padding: 8px 4px;
-    font-size: 0.85rem;
-  }
-  
-  .admin-input-table,
-  .admin-select-table {
-    padding: 0.2rem 0.4rem !important;
-    font-size: 0.8rem !important;
-  }
-}
 </style>

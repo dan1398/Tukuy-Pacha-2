@@ -43,6 +43,15 @@ export const uploadDocumento = async (req, res) => {
     try {
         const filenameInServer = archivo.filename;
 
+        // **Añade estas dos líneas para parsear los IDs a números enteros**
+        const idUsuarioNumerico = parseInt(id_usuario, 10);
+        const idParticipanteNumerico = parseInt(id_participante, 10);
+        
+        // Valida que los IDs sean números válidos
+        if (isNaN(idUsuarioNumerico) || isNaN(idParticipanteNumerico)) {
+            return res.status(400).json({ mensaje: 'Los IDs de usuario o participante no son números válidos.' });
+        }
+        
         const [result] = await pool.query(
             `INSERT INTO Documento
              (nombre_archivo, tipo_documento, fecha_subida, ruta_archivo, id_usuario, id_participante)
@@ -51,8 +60,8 @@ export const uploadDocumento = async (req, res) => {
                 archivo.originalname,
                 tipo_documento,
                 filenameInServer,
-                id_usuario,
-                id_participante
+                idUsuarioNumerico, // Usa la variable numérica
+                idParticipanteNumerico // Usa la variable numérica
             ]
         );
 
@@ -67,61 +76,74 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
+// En tu controlador de documentos (ej. documentos.controller.js)
+
 export const updateDocumento = async (req, res) => {
-    const { id } = req.params;
-    const { tipo_documento, id_usuario, id_participante } = req.body;
-    const archivo = req.file;
-
-    console.log(`→ Actualizando Documento ID: ${id}`);
-    console.log('   req.body (PUT):', req.body);
-    console.log('   req.file (PUT):', archivo);
-
     try {
-        const [existingDocRows] = await pool.query('SELECT ruta_archivo FROM Documento WHERE id_documento = ?', [id]);
+        const { id } = req.params;
+        const { tipo_documento, id_usuario, id_participante } = req.body;
+        const file = req.file;
 
-        if (existingDocRows.length === 0) {
-            return res.status(404).json({ mensaje: 'Documento no encontrado.' });
+        if (!id) {
+            return res.status(400).json({ mensaje: 'ID de documento no válido.' });
         }
 
-        const oldFilename = existingDocRows[0].ruta_archivo;
-
-        let query = 'UPDATE Documento SET tipo_documento = ?, id_usuario = ?, id_participante = ?';
-        let params = [tipo_documento, id_usuario, id_participante];
-
-        if (archivo) {
-            query += ', nombre_archivo = ?, ruta_archivo = ?';
-            params.push(archivo.originalname, archivo.filename);
-
-            if (oldFilename && oldFilename !== archivo.filename) {
-                const fullOldPath = path.join(uploadsDir, oldFilename);
-                if (fs.existsSync(fullOldPath)) {
-                    fs.unlinkSync(fullOldPath);
-                    console.log(`   Archivo antiguo eliminado: ${fullOldPath}`);
-                }
-            }
-        }
-
-        query += ' WHERE id_documento = ?';
-        params.push(id);
-
-        const [result] = await pool.query(query, params);
-
-        if (result.affectedRows === 0) {
+        // Obtener la información del documento existente
+        const [oldFileResult] = await pool.query('SELECT ruta_archivo, nombre_archivo FROM Documento WHERE id_documento = ?', [id]);
+        if (oldFileResult.length === 0) {
             return res.status(404).json({ mensaje: 'Documento no encontrado para actualizar.' });
         }
+        
+        // --- ⚠️ Aquí está el cambio crucial ⚠️ ---
+        // Determinar el nuevo nombre de archivo y ruta, manteniendo el antiguo si no hay un nuevo archivo.
+        let newFilename = oldFileResult[0].ruta_archivo;
+        let newOriginalname = oldFileResult[0].nombre_archivo;
 
-        res.status(200).json({ mensaje: 'Documento actualizado correctamente.' });
+        // Si se subió un nuevo archivo, elimina el anterior y actualiza los nombres
+        if (file) {
+            const oldFilePath = path.join(uploadsDir, oldFileResult[0].ruta_archivo);
+            if (fs.existsSync(oldFilePath)) {
+                fs.unlinkSync(oldFilePath);
+                console.log(`Archivo antiguo eliminado: ${oldFilePath}`);
+            }
+            newFilename = file.filename;
+            newOriginalname = file.originalname;
+        }
+
+        // Actualizar el documento en la base de datos
+        await pool.query(
+            `UPDATE Documento SET 
+                nombre_archivo = ?, 
+                tipo_documento = ?, 
+                ruta_archivo = ?, 
+                id_usuario = ?, 
+                id_participante = ? 
+            WHERE id_documento = ?`,
+            [newOriginalname, tipo_documento, newFilename, id_usuario, id_participante, id]
+        );
+
+        return res.status(200).json({ 
+            mensaje: 'Documento actualizado correctamente.', 
+            nuevo_nombre_archivo: newFilename 
+        });
 
     } catch (err) {
-        console.error("❌ Error al actualizar documento:", err);
-        res.status(500).json({ mensaje: 'Error interno del servidor al actualizar documento.', error: err.message });
+        console.error('❌ Error al actualizar documento:', err);
+        return res.status(500).json({ mensaje: 'Error al actualizar el documento.' });
     }
 };
 
 export const deleteDocumento = async (req, res) => {
-    const { id } = req.params;
+    // **Añade esta línea para convertir el ID del documento a un número entero**
+    const idDocumento = parseInt(req.params.id, 10);
+
+    // Valida que el ID sea un número válido
+    if (isNaN(idDocumento)) {
+        return res.status(400).json({ mensaje: 'ID de documento no válido.' });
+    }
+
     try {
-        const [rows] = await pool.query('SELECT ruta_archivo FROM Documento WHERE id_documento = ?', [id]);
+        const [rows] = await pool.query('SELECT ruta_archivo FROM Documento WHERE id_documento = ?', [idDocumento]);
 
         if (rows.length === 0) {
             return res.status(404).json({ mensaje: 'Documento no encontrado' });
@@ -129,7 +151,7 @@ export const deleteDocumento = async (req, res) => {
 
         const filenameToDelete = rows[0].ruta_archivo;
 
-        await pool.query('DELETE FROM Documento WHERE id_documento = ?', [id]);
+        await pool.query('DELETE FROM Documento WHERE id_documento = ?', [idDocumento]);
 
         if (filenameToDelete) {
             const filePath = path.join(uploadsDir, filenameToDelete);

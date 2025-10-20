@@ -5,6 +5,7 @@ import Login from '@/views/Login.vue'
 import Registrar from '@/views/Registrar.vue'
 import NuevoParticipante from '@/views/NuevoParticipante.vue'
 import EditarParticipante from '@/views/EditarParticipante.vue'
+import RegistrarPatrocinador from '@/views/RegistrarPatrocinador.vue'
 
 
 const router = createRouter({
@@ -38,6 +39,12 @@ const router = createRouter({
             component: Registrar,
             meta: { requiresAuth: true } 
         },
+         {
+            path: '/registrarPatrocinador',
+            name: 'registrarPatrocinador',
+            component: RegistrarPatrocinador,
+            meta: { requiresAuth: true } 
+        },
         {
           path: '/nuevo-participante',
           name: 'nuevoParticipante',
@@ -64,7 +71,7 @@ router.beforeEach((to, from, next) => {
     } else if (to.path === '/adminDashboard') {
       if (!userData) return next({ name: 'login' })
       const user = JSON.parse(userData)
-      if (user.rol === 'Admin') {
+      if (user.rol === 'Administrador') {
         next()
       } else {
         next({ name: 'personalDashboard' })
