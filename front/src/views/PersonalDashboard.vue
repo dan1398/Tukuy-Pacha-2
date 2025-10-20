@@ -273,7 +273,7 @@ const descargarPDF = () => {
 body {
   font-family: 'Poppins', sans-serif;
   color: var(--tukuypacha-dark-text);
-  background-color: var(--tukuypacha-bg-main); /* Fondo para todo el cuerpo */
+  background-color: var(--tukuypacha-bg-main); 
 }
 
 .admin-dashboard-wrapper {
@@ -289,7 +289,6 @@ body {
   border-right: 1px solid var(--tukuypacha-border-color);
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
   padding: 2rem !important;
-  /* Ya tiene d-flex flex-column del template, no es necesario aquí */
 }
 
 .admin-logo {
@@ -299,28 +298,27 @@ body {
 }
 
 .sidebar-profile-info {
-  margin-bottom: 2rem !important; /* Ajustado para más espacio */
+  margin-bottom: 2rem !important; 
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--tukuypacha-border-color);
-  text-align: center; /* Centrar el texto del perfil */
+  text-align: center; 
 }
 
-/* Nuevos estilos para el nombre de usuario y el rol */
+
 .sidebar-profile-info .user-name {
-  font-size: 1.3rem; /* Tamaño más grande para el nombre */
-  font-weight: 700; /* Más audaz */
-  color: var(--tukuypacha-accent); /* Color principal de Tukuypacha */
-  margin-bottom: 0.2rem; /* Espacio entre nombre y rol */
+  font-size: 1.3rem; 
+  font-weight: 700; 
+  color: var(--tukuypacha-accent); 
+  margin-bottom: 0.2rem; 
 }
 
 .sidebar-profile-info .user-role {
-  font-size: 0.95rem; /* Tamaño ligeramente más grande que antes */
+  font-size: 0.95rem; 
   color: var(--tukuypacha-light-text);
 }
 
 .sidebar-buttons {
-  /* Este div es el flex-grow-1 para empujar el botón de cerrar sesión hacia abajo */
-  /* No se necesita CSS adicional aquí si ya tiene flex-grow-1 y d-flex flex-column */
+
 }
 
 .btn-tukuypacha-sidebar {
@@ -355,7 +353,7 @@ body {
   border-color: #bd2130 !important;
 }
 
-/* --- Contenido Principal (el resto sigue igual) --- */
+/* --- Contenido Principal --- */
 .admin-main-content {
   background-color: var(--tukuypacha-bg-main);
   padding: 2.5rem !important;
@@ -507,7 +505,7 @@ body {
   color: var(--tukuypacha-dark-text);
 }
 
-/* --- Responsive adjustments (directamente de tu AdminDashboard.vue) --- */
+
 @media (max-width: 768px) {
   .admin-dashboard-wrapper {
     flex-direction: column;
@@ -520,7 +518,7 @@ body {
     border-bottom: 1px solid var(--tukuypacha-border-color);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     padding: 1rem !important;
-    flex-direction: column; /* Asegura que los elementos se apilen */
+    flex-direction: column; 
     align-items: center;
   }
 
@@ -537,18 +535,18 @@ body {
     border-bottom: none;
   }
 
-  /* Ajuste para los botones en móviles dentro de la sidebar */
+ 
   .sidebar-buttons {
-      width: 80%; /* Asegura que ocupen un buen ancho en móvil */
-      align-items: center; /* Centra los botones si el div es más ancho */
+      width: 80%; 
+      align-items: center; 
   }
   .admin-sidebar .btn-tukuypacha-sidebar,
   .admin-sidebar .btn-tukuypacha-danger {
-    width: 100% !important; /* Ocupan todo el ancho del contenedor sidebar-buttons */
-    margin-bottom: 0.5rem !important; /* Espacio entre ellos */
+    width: 100% !important; 
+    margin-bottom: 0.5rem !important; 
   }
   .admin-sidebar .btn-tukuypacha-danger {
-      margin-top: 0.5rem !important; /* Margen para el botón de cerrar sesión */
+      margin-top: 0.5rem !important; 
   }
 
   .admin-main-content {
@@ -596,10 +594,10 @@ body {
   }
 }
 
-/* Estilos para pantallas aún más pequeñas (ej., teléfonos muy estrechos) */
+
 @media (max-width: 480px) {
   .sidebar-buttons {
-      width: 95%; /* Ocupa casi todo el ancho en móviles muy pequeños */
+      width: 95%; 
   }
   .admin-sidebar .btn-tukuypacha-sidebar,
   .admin-sidebar .btn-tukuypacha-danger {

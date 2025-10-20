@@ -7,8 +7,8 @@ import {
     createPatrocinador,
     updatePatrocinador,
     deletePatrocinador,
-    createPatrocinio, // <-- Nueva función
-    getParticipantesByPatrocinador // <-- Nueva función
+    createPatrocinio, 
+    getParticipantesByPatrocinador 
 } from '../controllers/patrocinador.controller.js';
 
 const router = Router();

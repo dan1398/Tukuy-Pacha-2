@@ -466,31 +466,21 @@ let searchTimeout = null;
 
 const cardParticipante = ref(null);
 
-// ===============================================
-// === LÓGICA DE BÚSQUEDA Y PAGINACIÓN DE USUARIOS
-// ===============================================
-
-// 1. NUEVA PROPIEDAD: Enlazada con el input de búsqueda del HTML
 const busquedaUsuario = ref(''); 
 
-// Propiedades para la paginación de usuarios
-const currentPage = ref(1); // Página actual, inicia en 1
-const pageSize = ref(10);   // Elementos por página.
+const currentPage = ref(1); 
+const pageSize = ref(10);   
 
-// 2. PROPIEDAD COMPUTADA CLAVE: Filtra los usuarios según el término de búsqueda
 const usuariosFiltrados = computed(() => {
     if (!usuarios.value || usuarios.value.length === 0) return [];
 
     const busqueda = busquedaUsuario.value ? busquedaUsuario.value.toLowerCase().trim() : '';
 
-    // Si no hay término de búsqueda, devuelve la lista completa (Tabla normal)
     if (busqueda.length === 0) {
         return usuarios.value;
     }
 
-    // Filtrar usuarios
     return usuarios.value.filter(u => {
-        // Concatenar campos relevantes y convertirlos a minúsculas
         const textoCompleto = [
             u.nombre, 
             u.apellido_paterno, 
@@ -499,22 +489,17 @@ const usuariosFiltrados = computed(() => {
             u.rol
         ].join(' ').toLowerCase(); 
         
-        // Comprueba si el texto completo incluye el término de búsqueda
         return textoCompleto.includes(busqueda);
     });
 });
 
-// 3. Propiedad computada para el total de páginas (BASADO EN usuariosFiltrados)
 const totalPages = computed(() => {
     if (!usuariosFiltrados.value || usuariosFiltrados.value.length === 0) return 0;
     return Math.ceil(usuariosFiltrados.value.length / pageSize.value);
 });
 
-// 4. Propiedad computada para los usuarios paginados (BASADO EN usuariosFiltrados)
 const paginatedUsers = computed(() => {
     if (!usuariosFiltrados.value) return [];
-    
-    // Ajustar la página actual si el filtro reduce los resultados
     const totalItems = usuariosFiltrados.value.length;
     if (currentPage.value > totalPages.value && totalPages.value > 0) {
         currentPage.value = totalPages.value;
@@ -527,17 +512,13 @@ const paginatedUsers = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value;
     const end = start + pageSize.value;
     
-    // Devolver el segmento de la lista FILTRADA
     return usuariosFiltrados.value.slice(start, end);
 });
 
-// 5. WATCHER: Reiniciar la paginación a la página 1 cuando se inicia o cambia la búsqueda
 watch(busquedaUsuario, () => {
     currentPage.value = 1; 
 });
 
-
-// FUNCIONES DE NAVEGACIÓN AÑADIDAS PARA USUARIOS
 const nextUserPage = () => {
     if (currentPage.value < totalPages.value) {
         currentPage.value++;
@@ -550,55 +531,40 @@ const prevUserPage = () => {
     }
 };
 
-// =========================================================
-// === NUEVA LÓGICA DE BÚSQUEDA Y PAGINACIÓN DE PATROCINADORES
-// =========================================================
 
-// 1. NUEVA PROPIEDAD: Enlazada con el input de búsqueda del HTML para patrocinadores
 const busquedaPatrocinador = ref(''); 
-
-// Propiedades para la paginación de patrocinadores
 const currentPatrocinadorPage = ref(1);
-const patrocinadorPageSize = ref(10); // Elementos por página de Patrocinadores.
+const patrocinadorPageSize = ref(10); 
 
-// 2. PROPIEDAD COMPUTADA CLAVE: Filtra los patrocinadores según el término de búsqueda
 const patrocinadoresFiltrados = computed(() => {
     if (!patrocinadores.value || patrocinadores.value.length === 0) return [];
 
     const busqueda = busquedaPatrocinador.value ? busquedaPatrocinador.value.toLowerCase().trim() : '';
 
-    // Si no hay término de búsqueda, devuelve la lista completa
     if (busqueda.length === 0) {
         return patrocinadores.value;
     }
 
-    // Filtrar patrocinadores
     return patrocinadores.value.filter(p => {
-        // Concatenar campos relevantes y convertirlos a minúsculas
         const textoCompleto = [
             p.nombre, 
             p.apellido_paterno, 
             p.apellido_materno, 
-            p.celular, // Se incluye celular
+            p.celular, 
             p.correo
         ].join(' ').toLowerCase(); 
-        
-        // Comprueba si el texto completo incluye el término de búsqueda
         return textoCompleto.includes(busqueda);
     });
 });
 
-// 3. Propiedad computada para el total de páginas (BASADO EN patrocinadoresFiltrados)
 const totalPatrocinadorPages = computed(() => {
     if (!patrocinadoresFiltrados.value || patrocinadoresFiltrados.value.length === 0) return 0;
     return Math.ceil(patrocinadoresFiltrados.value.length / patrocinadorPageSize.value);
 });
 
-// 4. Propiedad computada para los patrocinadores paginados (BASADO EN patrocinadoresFiltrados)
 const paginatedPatrocinadores = computed(() => {
     if (!patrocinadoresFiltrados.value) return [];
 
-    // Ajustar la página actual si el filtro reduce los resultados
     const totalItems = patrocinadoresFiltrados.value.length;
     if (currentPatrocinadorPage.value > totalPatrocinadorPages.value && totalPatrocinadorPages.value > 0) {
         currentPatrocinadorPage.value = totalPatrocinadorPages.value;
@@ -610,18 +576,13 @@ const paginatedPatrocinadores = computed(() => {
 
     const start = (currentPatrocinadorPage.value - 1) * patrocinadorPageSize.value;
     const end = start + patrocinadorPageSize.value;
-    
-    // Devolver el segmento de la lista FILTRADA
     return patrocinadoresFiltrados.value.slice(start, end);
 });
 
-// 5. WATCHER: Reiniciar la paginación a la página 1 cuando se inicia o cambia la búsqueda de patrocinador
 watch(busquedaPatrocinador, () => {
     currentPatrocinadorPage.value = 1; 
 });
 
-
-// Funciones de navegación para PATROCINADORES (ACTUALIZADAS)
 const nextPatrocinadorPage = () => {
     if (currentPatrocinadorPage.value < totalPatrocinadorPages.value) {
         currentPatrocinadorPage.value++;
@@ -633,11 +594,6 @@ const prevPatrocinadorPage = () => {
         currentPatrocinadorPage.value--;
     }
 };
-
-
-// ===============================================
-// === RESTO DEL SCRIPT ORIGINAL
-// ===============================================
 
 onMounted(() => {
   const userData = localStorage.getItem('usuario')
@@ -654,9 +610,7 @@ watch(mostrarUsuarios, async (value) => {
     try {
       const res = await axios.get('http://localhost:3000/api/usuarios')
       usuarios.value = res.data
-      // Aseguramos que la página actual se resetee a 1 al cargar nuevos datos
       currentPage.value = 1; 
-      // Limpiar el campo de búsqueda al abrir el modal
       busquedaUsuario.value = '';
     } catch (err) {
       console.error('Error al cargar usuarios:', err)
@@ -673,9 +627,7 @@ watch(mostrarPatrocinadores, async (value) => {
     try {
       const res = await axios.get('http://localhost:3000/api/patrocinadores')
       patrocinadores.value = res.data;
-      // Reiniciar la paginación de patrocinadores al cargar nuevos datos
       currentPatrocinadorPage.value = 1;
-      // Opcional: Limpiar el campo de búsqueda al abrir el modal
       busquedaPatrocinador.value = '';
     } catch (err) {
       console.error('Error al cargar patrocinadores:', err)
@@ -737,7 +689,6 @@ const seleccionarParticipante = async (participante) => {
 
 const descargarPDF = () => {
   if (!participanteSeleccionado.value || !cardParticipante.value) {
-    // Usar una notificación/modal en lugar de alert()
     console.error('Por favor, seleccione un participante para descargar el PDF.'); 
     return;
   }
@@ -746,7 +697,7 @@ const descargarPDF = () => {
     margin: 1,
     filename: `Participante_${participanteSeleccionado.value.codigo}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true }, // Se añade useCORS: true aquí
+    html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
   };
 
@@ -895,7 +846,7 @@ const onPatrocinadorCelularValidate = (id, { isValid }) => {
 };
 
 const onPatrocinadorCelularBlur = (id) => {
-  // Aquí puedes dejar la validación visible o ajustarla a tu gusto
+
 };
 
 const eliminarPatrocinador = async (id) => {
@@ -904,8 +855,6 @@ const eliminarPatrocinador = async (id) => {
     patrocinadores.value = patrocinadores.value.filter(p => p.id_patrocinador !== id);
     if (editandoPatrocinadorId.value === id) editandoPatrocinadorId.value = null;
     console.log('Patrocinador eliminado de la base de datos');
-    // Asegurarse de que si se elimina el último elemento de la página, retrocedemos una página
-    // IMPORTANTE: USAR LA LISTA FILTRADA PARA LA CONDICIÓN DE RETROCESO
     if (patrocinadoresFiltrados.value.length % patrocinadorPageSize.value === 0 && patrocinadoresFiltrados.value.length > 0) {
       currentPatrocinadorPage.value--;
     }
@@ -1254,44 +1203,33 @@ body {
 }
 /* --- REGLA CLAVE PARA EL DESPLAZAMIENTO HORIZONTAL --- */
 .table-responsive-custom {
-  overflow-x: auto; /* Esto garantiza que la barra de desplazamiento aparezca en móvil. */
-  width: 100%; /* Asegura que el contenedor ocupe todo el ancho para que el scroll funcione. */
+  overflow-x: auto; 
+  width: 100%; 
 }
 
-/* FIX CRÍTICO: Fuerza a la tabla interna a tener un ancho mínimo y garantiza el scroll. */
 .table-responsive-custom .admin-table {
     min-width: 900px; 
 }
 
-/* FIX ESPECÍFICO PARA MODALES: Asegura que el cuerpo del modal y el diálogo permitan el desbordamiento horizontal */
-
-/* 1. Permitir el scroll horizontal en el cuerpo del modal */
 .admin-modal-body {
     overflow-x: auto; 
     padding: 1rem;
 }
 
-/* 2. Asegurar que el modal-dialog no limite el ancho forzado de la tabla en dispositivos pequeños */
+
 @media screen and (max-width: 768px) {
-    /* Permitimos que el diálogo del modal se adapte al ancho de su contenido desbordado */
+
     .admin-modal-dialog {
         max-width: none !important;
         width: 100% !important;
     }
-    
-    /* FIX AGRESIVO: Deshace cualquier 'hidden' en el body */
     body {
         overflow-x: unset !important; 
     }
 }
 
 
-/* -------------------------------------------------------------
- * ESTILOS DE TABLA BASE (tukuypacha) - REGLAS CONSOLIDADAS
- * -------------------------------------------------------------
- */
 
-/* Estilos de encabezados (th) */
 .admin-table th { 
   background-color: var(--tukuypacha-bg-light);
   color: var(--tukuypacha-dark-text);
@@ -1302,14 +1240,12 @@ body {
   text-align: center;
 }
 
-/* Estilos de celdas (td) */
 .admin-table td {
   vertical-align: middle;
   padding: 0.75rem;
   text-align: center;
 }
 
-/* Estilos de inputs y selects en la tabla */
 .admin-input-table,
 .admin-select-table {
   border-color: var(--tukuypacha-border-color);
@@ -1322,7 +1258,6 @@ body {
   box-shadow: 0 0 0 0.2rem rgba(240, 90, 48, 0.2);
 }
 
-/* --- Botones de acciones uniformes --- */
 .actions-cell .btn {
   width: 36px;
   height: 36px;
@@ -1332,17 +1267,15 @@ body {
   padding: 0;
 }
 
-/* --- Iconos con tamaño uniforme --- */
 .actions-cell .btn i {
   font-size: 14px;
 }
 
-/* --- Separación entre botones dentro de la celda de acciones --- */
 .actions-cell .btn + .btn {
   margin-left: 4px;
 }
 
-/* --- Hover más visible para las filas de la tabla --- */
+
 .admin-table tbody tr:hover {
   background-color: rgba(0, 0, 0, 0.04);
 }

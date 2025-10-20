@@ -39,12 +39,11 @@ export const getPatrocinadorById = async (req, res) => {
 export const createPatrocinador = async (req, res) => {
     let { nombre, apellido_paterno, apellido_materno, celular, correo } = req.body;
     
-    // Ya no necesitas esta parte que revisa si celular es objeto
+    
     // if (celular && typeof celular === 'object' && celular.international) {
     //     celular = celular.international;
     // }
 
-    // Opcional: asegurar que celular empiece con +
     if (typeof celular === 'string' && !celular.startsWith('+') && celular.length > 0) {
         celular = '+' + celular;
     }
@@ -61,12 +60,11 @@ export const createPatrocinador = async (req, res) => {
     }
 };
 
-// Función para actualizar un patrocinador existente (CORREGIDO)
+// Función para actualizar un patrocinador existente 
 export const updatePatrocinador = async (req, res) => {
     const { id } = req.params;
     let { nombre, apellido_paterno, apellido_materno, celular, correo } = req.body;
 
-    // Ya no necesitas esta parte
     // if (celular && typeof celular === 'object' && celular.international) {
     //     celular = celular.international;
     // }

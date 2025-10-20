@@ -1,34 +1,28 @@
 <template>
-  <!-- Contenedor principal con los estilos del diseño "tukuypacha" -->
   <div class="tukuypacha-register-wrapper d-flex justify-content-center align-items-center vh-100">
     <div class="card tukuypacha-register-card shadow-sm p-4 p-md-5">
       <div class="text-center mb-4">
-        <!-- Título del formulario -->
+
         <h3 class="tukuypacha-register-title">Registrar Patrocinador</h3>
       </div>
       
-      <!-- Formulario para registrar el patrocinador -->
       <form @submit.prevent="registrarPatrocinador" class="row g-3">
         
-        <!-- Campo para el nombre del patrocinador (requerido) -->
         <div class="col-12">
           <label for="nombre" class="form-label tukuypacha-label">Nombre</label>
           <input v-model="nombre" type="text" id="nombre" name="nombre" class="form-control tukuypacha-input" required />
         </div>
         
-        <!-- Campo para el apellido paterno del patrocinador -->
         <div class="col-12">
           <label for="apellido_paterno" class="form-label tukuypacha-label">Apellido Paterno</label>
           <input v-model="apellido_paterno" type="text" id="apellido_paterno" name="apellido_paterno" class="form-control tukuypacha-input" />
         </div>
 
-        <!-- Campo para el apellido materno del patrocinador -->
         <div class="col-12">
           <label for="apellido_materno" class="form-label tukuypacha-label">Apellido Materno</label>
           <input v-model="apellido_materno" type="text" id="apellido_materno" name="apellido_materno" class="form-control tukuypacha-input" />
         </div>
         
-        <!-- Campo para el celular con la librería vue-tel-input -->
         <div class="col-12">
           <label for="telefono" class="form-label tukuypacha-label" >Celular</label>
           <VueTelInput 
@@ -42,20 +36,16 @@
           ></VueTelInput>
         </div>
 
-        <!-- Campo para el correo electrónico del patrocinador (ya no es requerido) -->
         <div class="col-12">
           <label for="correo" class="form-label tukuypacha-label">Correo</label>
           <input v-model="correo" type="email" id="correo" name="correo" class="form-control tukuypacha-input" />
         </div>
-        
-        <!-- Contenedor para los botones de acción -->
         <div class="col-12 d-flex justify-content-between gap-2 mt-4">
           <button type="submit" class="btn btn-tukuypacha flex-grow-1">Registrar</button>
           <button type="button" class="btn btn-tukuypacha-secondary flex-grow-1" @click="cancelar">Cancelar</button>
         </div>
       </form>
-      
-      <!-- Mensaje de respuesta, si existe -->
+
       <div v-if="mensaje" class="alert alert-info mt-3">{{ mensaje }}</div>
     </div>
   </div>
@@ -255,7 +245,6 @@ body {
   }
 }
 
-/* SOLUCIÓN PARA VUE-TEL-INPUT */
 .tukuypacha-input-tel.vue-tel-input {
   border: 1px solid var(--tukuypacha-border-color) !important;
   border-radius: 5px !important;

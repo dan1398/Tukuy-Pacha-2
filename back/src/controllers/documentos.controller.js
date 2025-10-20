@@ -43,11 +43,11 @@ export const uploadDocumento = async (req, res) => {
     try {
         const filenameInServer = archivo.filename;
 
-        // **Añade estas dos líneas para parsear los IDs a números enteros**
+        
         const idUsuarioNumerico = parseInt(id_usuario, 10);
         const idParticipanteNumerico = parseInt(id_participante, 10);
         
-        // Valida que los IDs sean números válidos
+      
         if (isNaN(idUsuarioNumerico) || isNaN(idParticipanteNumerico)) {
             return res.status(400).json({ mensaje: 'Los IDs de usuario o participante no son números válidos.' });
         }
@@ -60,8 +60,8 @@ export const uploadDocumento = async (req, res) => {
                 archivo.originalname,
                 tipo_documento,
                 filenameInServer,
-                idUsuarioNumerico, // Usa la variable numérica
-                idParticipanteNumerico // Usa la variable numérica
+                idUsuarioNumerico, 
+                idParticipanteNumerico 
             ]
         );
 
@@ -76,7 +76,7 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// En tu controlador de documentos (ej. documentos.controller.js)
+
 
 export const updateDocumento = async (req, res) => {
     try {
@@ -94,7 +94,6 @@ export const updateDocumento = async (req, res) => {
             return res.status(404).json({ mensaje: 'Documento no encontrado para actualizar.' });
         }
         
-        // --- ⚠️ Aquí está el cambio crucial ⚠️ ---
         // Determinar el nuevo nombre de archivo y ruta, manteniendo el antiguo si no hay un nuevo archivo.
         let newFilename = oldFileResult[0].ruta_archivo;
         let newOriginalname = oldFileResult[0].nombre_archivo;

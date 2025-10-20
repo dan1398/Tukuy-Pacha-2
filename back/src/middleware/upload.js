@@ -35,7 +35,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true)
   } else {
-    // Puedes personalizar este mensaje de error
+    
     cb(new Error('Tipo de archivo no permitido. Solo se permiten imágenes (jpeg, png), PDF, hojas de cálculo (xls, xlsx) y Word (DOC, DOCX).'), false)
   }
 }

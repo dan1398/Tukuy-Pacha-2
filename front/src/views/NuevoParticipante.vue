@@ -256,8 +256,6 @@ const celularPatrocinador = ref('')
 const correoPatrocinador = ref('')
 const idPatrocinador = ref(null)
 
-// --- Funciones de manejo de campos y validación local (sin cambios) ---
-
 function handleCodigoInput(e) {
   let value = e.target.value.toUpperCase()
   
@@ -344,8 +342,6 @@ function validarCelular() {
   errorCelular.value = ''
   return true
 }
-
-// --- Funciones para Patrocinador, Documentos y Foto (sin cambios) ---
 
 async function buscarPatrocinadores() {
   if (busquedaPatrocinador.value.length < 3) {
