@@ -662,8 +662,8 @@ h5.admin-section-title {
 }
 
 .admin-btn-success {
-  background-color: var(--tukuypacha-success, #28a745);
-  border-color: var(--tukuypacha-success, #28a745);
+  background-color: var(--tukuypacha-accent, #f05a30);
+  border-color: var(--tukuypacha-accent, #f05a30);
   color: #fff;
   font-weight: 500;
   border-radius: 5px;
@@ -671,14 +671,14 @@ h5.admin-section-title {
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 .admin-btn-success:hover {
-  background-color: #218838;
-  border-color: #1e7e34;
+  background-color: var(--tukuypacha-button-bg);
+  border-color: var(--tukuypacha-button-bg);
   opacity: 0.9;
 }
 
 .admin-btn-secondary {
-  background-color: var(--tukuypacha-secondary-btn, #6c757d);
-  border-color: var(--tukuypacha-secondary-btn, #6c757d);
+  background-color: var(--tukuypacha-danger);
+  border-color: var(--tukuypacha-danger);
   color: #fff;
   font-weight: 500;
   border-radius: 5px;
@@ -686,8 +686,8 @@ h5.admin-section-title {
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 .admin-btn-secondary:hover {
-  background-color: #5a6268;
-  border-color: #545b62;
+  background-color:var(--tukuypacha-danger);
+  border-color: var(--tukuypacha-danger);
   opacity: 0.9;
 }
 
@@ -713,7 +713,7 @@ h5.admin-section-title {
   color: #fff;
   font-weight: 500;
   border-radius: 5px;
-  padding: 0.5rem 1rem;
+  padding: 0.7rem 1rem;
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 .btn-danger:hover {

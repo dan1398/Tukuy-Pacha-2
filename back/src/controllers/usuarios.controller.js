@@ -76,7 +76,7 @@ export const createUsuario = async (req, res) => {
                     <p>Se ha creado una nueva cuenta para ti. Aquí están tus credenciales para acceder:</p>
                     <ul>
                         <li><strong>Correo:</strong> ${correo}</li>
-                        <li><strong>Contraseña temporal:</strong> ${contraseñaPlana}</li>
+                        <li><strong>Contraseña:</strong> ${contraseñaPlana}</li>
                     </ul>`
         };
         await transporter.sendMail(mailOptions);

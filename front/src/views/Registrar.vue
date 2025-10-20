@@ -191,8 +191,8 @@ body {
 }
 
 .btn-tukuypacha-secondary {
-  background-color: var(--tukuypacha-secondary-btn) !important;
-  border-color: var(--tukuypacha-secondary-btn) !important;
+  background-color: var(--tukuypacha-danger) !important;
+  border-color: var(--tukuypacha-danger) !important;
   color: #fff !important;
   border-radius: 5px !important;
   font-weight: 500 !important;
@@ -205,8 +205,8 @@ body {
 }
 
 .btn-tukuypacha-secondary:hover {
-  background-color: #5a6268 !important;
-  border-color: #545b62 !important;
+  background-color: var(--tukuypacha-danger) !important;
+  border-color: var(--tukuypacha-danger) !important;
   opacity: 0.9 !important;
 }
 
