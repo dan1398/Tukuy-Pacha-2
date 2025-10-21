@@ -10,23 +10,22 @@ import patrocinadorRoutes from './routes/patrocinador.routes.js'
 import dotenv from 'dotenv'
 import path from 'path';
 import { fileURLToPath } from 'url'
-import fs from 'fs'; // Importar el módulo FS
+import fs from 'fs';
 
 dotenv.config()
 
+// --- CONFIGURACIÓN DE RUTAS Y DIRECTORIOS ---
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// --- RUTA CORREGIDA BASADA EN TU LOG DE ERROR ---
-// Si Multer busca en '/src/back/uploads/', la ruta debe ser:
-const uploadsPath = path.join(__dirname, 'uploads')
-// Anteriormente usaba: path.join(__dirname, '..', 'uploads'), lo que causaba el error.
+// CORRECCIÓN: Usamos '..' para subir de 'src' a la raíz del proyecto y encontrar 'uploads'
+const uploadsPath = path.join(__dirname, '..', 'uploads') 
 
 // --- CÓDIGO AÑADIDO: CREACIÓN FORZADA DEL DIRECTORIO ---
 try {
     // 1. Verificar si la carpeta existe.
     if (!fs.existsSync(uploadsPath)) {
-        // 2. Si no existe, crearla. El { recursive: true } asegura que funcione.
+        // 2. Si no existe, crearla.
         fs.mkdirSync(uploadsPath, { recursive: true });
         console.log(`✅ Directorio de subidas creado exitosamente en: ${uploadsPath}`);
     } else {
@@ -37,7 +36,7 @@ try {
 }
 // --------------------------------------------------------
 
-console.log('🌐 Sirviendo estáticos desde:', uploadsPath)
+console.log('🌐 Servidor Express usando la carpeta de subidas en:', uploadsPath)
 
 const app = express()
 
@@ -48,16 +47,18 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
+// --- LÍNEA CLAVE PARA SERVIR ARCHIVOS ESTÁTICOS ---
+// Esto permite que el navegador acceda a archivos usando la URL /uploads/...
+app.use('/uploads', express.static(uploadsPath)) 
+// --------------------------------------------------------
+
+
 // Rutas API
 app.use('/api/auth', authRoutes)
 app.use('/api/participantes', participanteRoutes)
 app.use('/api/documentos', documentoRoutes)
 app.use('/api/usuarios', usuarioRoutes)
 app.use('/api/patrocinadores', patrocinadorRoutes)
-
-// Servicio de Archivos Estáticos (usando la variable ya definida)
-// Se usa uploadsPath para servir la carpeta correcta
-app.use('/uploads', express.static(uploadsPath))
 
 
 export default app
