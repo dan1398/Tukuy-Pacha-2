@@ -285,7 +285,7 @@
             </div>
         </div>
     </div>
-</div> 
+    </div> 
 
     <div class="admin-modal-overlay" v-if="mostrarPatrocinadores">
     <div class="modal-dialog admin-modal-dialog admin-modal-expanded">
