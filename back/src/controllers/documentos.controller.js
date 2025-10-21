@@ -8,7 +8,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Ruta a la carpeta 'uploads', asume que el controlador está en src/controllers y uploads está en la raíz del proyecto
-const uploadsDir = path.resolve(__dirname, '..', '..', 'uploads'); 
+const uploadsDir = path.resolve(__dirname, '..', '..', '..', 'uploads'); 
 
 console.log('Controlador de documentos está utilizando uploadsDir:', uploadsDir);
 
