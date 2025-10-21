@@ -59,8 +59,8 @@
         </div>
 
         <div class="col-12 mb-3">
-          <label class="form-label">Foto (actual:
-            <a v-if="participante.foto" :href="`http://localhost:3000/uploads/${participante.foto}`" target="_blank">{{ participante.foto }}</a>
+          <label class="form-label">Foto (actual):
+            <a v-if="participante.foto" :href="`${API_URL}/uploads/${participante.foto}`" target="_blank">{{ participante.foto }}</a>
             <span v-else>N/A</span>
           </label>
           <input type="file" name="foto" class="form-control admin-input" @change="handleFoto" accept="image/jpeg,image/png" />
@@ -232,7 +232,7 @@
               <label class="form-label">Archivo</label>
               <input type="file" class="form-control admin-input" @change="(event) => handleArchivo(event, index)" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx" />
               <small v-if="doc.ruta_archivo && !doc.nuevoArchivo" class="form-text text-muted">
-                Archivo actual: <a :href="`http://localhost:3000/uploads/${doc.ruta_archivo}`" target="_blank">{{ doc.nombre_archivo }}</a>
+               Archivo actual: <a :href="`${API_URL}/uploads/${doc.ruta_archivo}`" target="_blank">{{ doc.nombre_archivo }}</a>
               </small>
               <small v-else-if="doc.nuevoArchivo" class="form-text text-muted">
                 Nuevo archivo seleccionado: {{ doc.nuevoArchivo.name }}

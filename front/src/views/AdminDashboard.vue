@@ -90,7 +90,7 @@
                 {{ participanteSeleccionado.nombre}} {{ participanteSeleccionado.apellido_paterno }} {{ participanteSeleccionado.apellido_materno }}
               </h5>
               <div v-if="participanteSeleccionado.foto" class="text-center mb-3">
-                <img :src="`http://localhost:3000/uploads/${participanteSeleccionado.foto}`" alt="Foto del participante" class="img-thumbnail participant-photo" />
+                <img :src="`${API_URL}/uploads/${participanteSeleccionado.foto}`" alt="Foto del participante" class="img-thumbnail participant-photo" />
               </div>
               <div class="row">
                 <div class="col-md-6"><p><strong>Código:</strong> {{ participanteSeleccionado.codigo }}</p></div>
@@ -129,14 +129,14 @@
                   <div class="btn-group btn-group-sm">
                     <a
                       v-if="!doc.ruta_archivo.endsWith('.xls') && !doc.ruta_archivo.endsWith('.xlsx')"
-                      :href="`http://localhost:3000/uploads/${doc.ruta_archivo}`"
+                      :href="`${API_URL}/uploads/${doc.ruta_archivo}`"
                       target="_blank"
                       class="btn btn-sm btn-tukuypacha-outline"
                     >
                       Ver
                     </a>
                     <a
-                      :href="`http://localhost:3000/api/documentos/download/${doc.ruta_archivo}`"
+                      :href="`${API_URL}/api/documentos/download/${doc.ruta_archivo}`"
                       class="btn btn-sm btn-tukuypacha-success ms-2"
                     >Descargar</a>
                   </div>
