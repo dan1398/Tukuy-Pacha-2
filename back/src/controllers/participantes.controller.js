@@ -44,14 +44,13 @@ export const buscarParticipantes = async (req, res) => {
                 pat.celular AS patrocinador_celular,
                 pat.correo AS patrocinador_correo
             FROM 
-                participante p  -- CORREGIDO
+                participante p  -- CORREGIDO
             LEFT JOIN 
                 patrocinador_participante pp ON p.id_participante = pp.id_participante
             LEFT JOIN 
                 patrocinador pat ON pp.id_patrocinador = pat.id_patrocinador
             WHERE 
-                p.id_participante = ?
-                OR p.codigo LIKE ?
+                p.codigo LIKE ?
                 OR p.nombre LIKE ?
                 OR p.apellido_paterno LIKE ?
                 OR p.apellido_materno LIKE ?
@@ -60,15 +59,14 @@ export const buscarParticipantes = async (req, res) => {
                 OR p.celular LIKE ?
                 OR pat.nombre LIKE ?`,
             [
-                termino,
-                terminoBusqueda, 
-                terminoBusqueda,
-                terminoBusqueda,
-                terminoBusqueda,
-                terminoBusqueda,
-                terminoBusqueda,
-                terminoBusqueda,
-                terminoBusqueda,
+                terminoBusqueda, // P.codigo
+                terminoBusqueda, // P.nombre
+                terminoBusqueda, // P.apellido_paterno
+                terminoBusqueda, // P.apellido_materno
+                terminoBusqueda, // P.CI
+                terminoBusqueda, // P.direccion
+                terminoBusqueda, // P.celular
+                terminoBusqueda, // Pat.nombre
             ]
         );
         res.json(rows);
@@ -91,7 +89,7 @@ export const getParticipanteById = async (req, res) => {
                 pat.apellido_materno AS patrocinador_apellido_materno,
                 pat.celular AS patrocinador_celular
             FROM 
-                participante p  -- CORREGIDO
+                participante p  -- CORREGIDO
             LEFT JOIN 
                 patrocinador_participante pp ON p.id_participante = pp.id_participante
             LEFT JOIN 
@@ -243,7 +241,7 @@ export const updateParticipante = async (req, res) => {
 
         // Construir y ejecutar la consulta de actualización del participante
         let query = `
-            UPDATE participante SET  -- CORREGIDO
+            UPDATE participante SET  -- CORREGIDO
                 codigo = ?, 
                 nombre = ?, 
                 apellido_paterno = ?, 
