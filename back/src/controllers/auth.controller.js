@@ -6,7 +6,7 @@ export const login = async (req, res) => {
   const { correo, contraseña } = req.body
 
   try {
-    const [rows] = await pool.query('SELECT * FROM Usuario WHERE correo = ?', [correo])
+    const [rows] = await pool.query('SELECT * FROM usuario WHERE correo = ?', [correo])
     if (rows.length === 0) return res.status(401).json({ mensaje: 'Usuario no encontrado' })
 
     const usuario = rows[0]

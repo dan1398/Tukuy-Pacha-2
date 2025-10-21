@@ -2,15 +2,19 @@ import pool from '../db.js';
 import bcrypt from 'bcryptjs'; // <--- CORRECCIÓN CLAVE: Usar 'bcryptjs'
 import nodemailer from 'nodemailer';
 
+/**
+ * Obtiene todos los usuarios, excluyendo la contraseña.
+ */
 export const getUsuarios = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT id_usuario, nombre, apellido_paterno, apellido_materno, correo, rol FROM Usuario');
+        const [rows] = await pool.query('SELECT id_usuario, nombre, apellido_paterno, apellido_materno, correo, rol FROM usuario');
         res.json(rows);
     } catch (err) {
         res.status(500).json({ mensaje: 'Error al obtener usuarios', error: err.message });
     }
 };
 
+// Configuración del transportador de Nodemailer (debe estar fuera de las funciones)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -19,6 +23,11 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+/**
+ * Genera una contraseña aleatoria y segura.
+ * @param {number} longitud - Longitud de la contraseña.
+ * @returns {string} Contraseña generada.
+ */
 function generarContraseñaAleatoria(longitud = 12) {
     const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
     let contraseña = '';
@@ -28,10 +37,14 @@ function generarContraseñaAleatoria(longitud = 12) {
     return contraseña;
 }
 
+/**
+ * Restablece la contraseña de un usuario a una generada aleatoriamente y la envía por correo.
+ */
 export const restablecerContrasena = async (req, res) => {
     const { id } = req.params;
     try {
-        const [usuarioRows] = await pool.query('SELECT correo FROM Usuario WHERE id_usuario = ?', [id]);
+        // Consultar correo del usuario (TABLA: usuario)
+        const [usuarioRows] = await pool.query('SELECT correo FROM usuario WHERE id_usuario = ?', [id]);
         if (usuarioRows.length === 0) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
         }
@@ -41,7 +54,8 @@ export const restablecerContrasena = async (req, res) => {
         // CORRECCIÓN: Usar el factor de rounds directamente
         const contraseñaHasheada = await bcrypt.hash(contraseñaPlana, 10); 
         
-        await pool.query('UPDATE Usuario SET contraseña = ? WHERE id_usuario = ?', [contraseñaHasheada, id]);
+        // Actualizar la contraseña en la base de datos (TABLA: usuario)
+        await pool.query('UPDATE usuario SET contraseña = ? WHERE id_usuario = ?', [contraseñaHasheada, id]);
         
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -61,6 +75,9 @@ export const restablecerContrasena = async (req, res) => {
     }
 };
 
+/**
+ * Crea un nuevo usuario con una contraseña generada aleatoriamente y envía las credenciales por correo.
+ */
 export const createUsuario = async (req, res) => {
     const { nombre, apellido_paterno, apellido_materno, correo, rol } = req.body;
     try {
@@ -69,8 +86,9 @@ export const createUsuario = async (req, res) => {
         // CORRECCIÓN: Usar el factor de rounds directamente
         const contraseñaHasheada = await bcrypt.hash(contraseñaPlana, 10); 
         
+        // Inserción en la base de datos (TABLA: usuario)
         const [result] = await pool.query(
-            'INSERT INTO Usuario (nombre, apellido_paterno, apellido_materno, correo, contraseña, rol) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO usuario (nombre, apellido_paterno, apellido_materno, correo, contraseña, rol) VALUES (?, ?, ?, ?, ?, ?)',
             [nombre, apellido_paterno, apellido_materno, correo, contraseñaHasheada, rol]
         );
         const mailOptions = {
@@ -95,10 +113,14 @@ export const createUsuario = async (req, res) => {
     }
 };
 
+/**
+ * Obtiene un usuario específico por ID, excluyendo la contraseña.
+ */
 export const getUsuarioById = async (req, res) => {
     const { id } = req.params;
     try {
-        const [rows] = await pool.query('SELECT id_usuario, nombre, apellido_paterno, apellido_materno, correo, rol FROM Usuario WHERE id_usuario = ?', [id]);
+        // Consulta a la base de datos (TABLA: usuario)
+        const [rows] = await pool.query('SELECT id_usuario, nombre, apellido_paterno, apellido_materno, correo, rol FROM usuario WHERE id_usuario = ?', [id]);
         if (rows.length === 0) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
         }
@@ -108,40 +130,51 @@ export const getUsuarioById = async (req, res) => {
     }
 };
 
+/**
+ * Actualiza el rol de un usuario.
+ */
 export const updateRol = async (req, res) => {
     const { id } = req.params;
     const { rol } = req.body;
     try {
-        await pool.query('UPDATE Usuario SET rol = ? WHERE id_usuario = ?', [rol, id]);
+        // Actualización en la base de datos (TABLA: usuario)
+        await pool.query('UPDATE usuario SET rol = ? WHERE id_usuario = ?', [rol, id]);
         res.json({ mensaje: 'Rol actualizado' });
     } catch (err) {
         res.status(500).json({ mensaje: 'Error al actualizar rol', error: err.message });
     }
 };
 
+/**
+ * Actualiza la contraseña de un usuario (debe ser hasheada).
+ */
 export const updateContrasena = async (req, res) => {
     const { id } = req.params;
     const { nuevaContrasena } = req.body;
     try {
-        // Usa el factor de rounds directamente, como ya estaba:
+        // Hashear la nueva contraseña
         const hashedPassword = await bcrypt.hash(nuevaContrasena, 10); 
-        await pool.query('UPDATE Usuario SET contraseña = ? WHERE id_usuario = ?', [hashedPassword, id]);
+        // Actualización en la base de datos (TABLA: usuario)
+        await pool.query('UPDATE usuario SET contraseña = ? WHERE id_usuario = ?', [hashedPassword, id]);
         res.json({ mensaje: 'Contraseña actualizada' });
     } catch (err) {
         res.status(500).json({ mensaje: 'Error al actualizar contraseña', error: err.message });
     }
 };
 
+/**
+ * Actualiza la información general de un usuario, incluyendo opcionalmente la contraseña.
+ */
 export const updateUsuario = async (req, res) => {
     const { id } = req.params;
     const { nombre, apellido_paterno, apellido_materno, correo, contraseña, rol } = req.body;
 
     try {
-        let query = 'UPDATE Usuario SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, correo = ?, rol = ?';
+        let query = 'UPDATE usuario SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, correo = ?, rol = ?';
         const values = [nombre, apellido_paterno, apellido_materno, correo, rol];
 
         if (contraseña) {
-            // Usa el factor de rounds directamente, como ya estaba:
+            // Hashear la nueva contraseña si se proporciona
             const hashedPassword = await bcrypt.hash(contraseña, 10); 
             query += ', contraseña = ?';
             values.push(hashedPassword);
@@ -150,6 +183,7 @@ export const updateUsuario = async (req, res) => {
         query += ' WHERE id_usuario = ?';
         values.push(id);
 
+        // Ejecutar la actualización (TABLA: usuario)
         await pool.query(query, values);
         res.json({ mensaje: 'Usuario actualizado correctamente' });
     } catch (err) {
@@ -158,11 +192,17 @@ export const updateUsuario = async (req, res) => {
     }
 };
 
+/**
+ * Elimina un usuario y elimina sus documentos asociados.
+ */
 export const deleteUsuario = async (req, res) => {
     const { id } = req.params;
     try {
+        // Primero, eliminar los documentos asociados para evitar errores de clave foránea
         await pool.query('DELETE FROM documento WHERE id_usuario = ?', [id]);
-        const [result] = await pool.query('DELETE FROM Usuario WHERE id_usuario = ?', [id]);
+        
+        // Luego, eliminar el usuario (TABLA: usuario)
+        const [result] = await pool.query('DELETE FROM usuario WHERE id_usuario = ?', [id]);
 
         if (result.affectedRows === 0) {
             res.status(404).json({ mensaje: 'Usuario no encontrado' });
