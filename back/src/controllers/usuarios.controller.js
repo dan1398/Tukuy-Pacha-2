@@ -1,5 +1,5 @@
 import pool from '../db.js';
-import bcrypt from 'bcryptjs'; // <--- CORRECCIÓN CLAVE: Usar 'bcryptjs'
+import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 
 /**
@@ -14,13 +14,21 @@ export const getUsuarios = async (req, res) => {
     }
 };
 
-// Configuración del transportador de Nodemailer (debe estar fuera de las funciones)
+// =======================================================
+// CAMBIO CLAVE: Configuración de Nodemailer explícita
+// Usamos el host y el puerto 587 con STARTTLS para evitar timeouts.
+// =======================================================
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com', // Servidor SMTP de Gmail
+    port: 587,              // Puerto estándar para TLS/STARTTLS
+    secure: false,          // 'false' para STARTTLS (puerto 587)
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    // Añadir timeout de conexión para depuración (opcional, pero útil)
+    connectionTimeout: 5000, // 5 segundos
+    greetingTimeout: 5000,   // 5 segundos
 });
 
 /**
@@ -71,6 +79,7 @@ export const restablecerContrasena = async (req, res) => {
         res.status(200).json({ mensaje: 'Contraseña restablecida y enviada por correo.' });
     } catch (err) {
         console.error('Error al restablecer contraseña:', err);
+        // Si hay un error, el servidor debe responder con 500 para informar al frontend
         res.status(500).json({ mensaje: 'Error al restablecer contraseña', error: err.message });
     }
 };
