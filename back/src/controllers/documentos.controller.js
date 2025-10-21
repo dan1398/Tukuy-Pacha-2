@@ -21,7 +21,7 @@ export const getDocumentos = async (req, res) => {
     try {
         const { participanteId } = req.query;
         // La consulta une el documento con el participante para obtener el nombre
-        let query = 'SELECT d.*, p.nombre AS nombre_participante FROM documento d LEFT JOIN Participante p ON d.id_participante = p.id_participante';
+        let query = 'SELECT d.*, p.nombre AS nombre_participante FROM documento d LEFT JOIN participante p ON d.id_participante = p.id_participante';
         let params = [];
 
         if (participanteId) {
