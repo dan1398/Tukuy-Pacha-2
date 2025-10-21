@@ -155,6 +155,10 @@ import { useRouter } from 'vue-router'
 import logo from '../images/logo-top2.png';
 import html2pdf from 'html2pdf.js';
 
+// --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
+const API_URL = 'https://tukuy-pacha-2.onrender.com';
+// --------------------------------------------------
+
 const router = useRouter()
 const usuario = ref({})
 const busquedaId = ref('')
@@ -165,87 +169,89 @@ const cardParticipante = ref(null); // Referencia al elemento HTML que se conver
 let searchTimeout = null;
 
 onMounted(() => {
-  const userData = localStorage.getItem('usuario')
-  if (!userData) {
-    router.push('/login')
-  } else {
-    usuario.value = JSON.parse(userData)
-  }
+  const userData = localStorage.getItem('usuario')
+  if (!userData) {
+    router.push('/login')
+  } else {
+    usuario.value = JSON.parse(userData)
+  }
 })
 
 const cerrarSesion = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('usuario')
-  localStorage.clear()
-  router.push('/login')
+  localStorage.removeItem('token')
+  localStorage.removeItem('usuario')
+  localStorage.clear()
+  router.push('/login')
 }
 
 // Watcher para la búsqueda en tiempo real
 watch(busquedaId, (newValue) => {
-  if (!newValue || newValue.trim().length < 3) {
-    participantes.value = [];
-    participanteSeleccionado.value = null;
-    documentos.value = [];
-    return;
-  }
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    buscarParticipantes();
-  }, 300);
+  if (!newValue || newValue.trim().length < 3) {
+    participantes.value = [];
+    participanteSeleccionado.value = null;
+    documentos.value = [];
+    return;
+  }
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    buscarParticipantes();
+  }, 300);
 });
 
 const buscarParticipantes = async () => {
-  try {
-    const res = await axios.get(
-      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
-    );
-    participantes.value = res.data;
-    participanteSeleccionado.value = null;
+  try {
+    // CAMBIO: Usar API_URL
+    const res = await axios.get(
+      `${API_URL}/api/participantes/buscar?termino=${busquedaId.value}`
+    );
+    participantes.value = res.data;
+    participanteSeleccionado.value = null;
 
-    if (participantes.value.length === 1) {
-      seleccionarParticipante(participantes.value[0]);
-    } else {
-      documentos.value = [];
-    }
+    if (participantes.value.length === 1) {
+      seleccionarParticipante(participantes.value[0]);
+    } else {
+      documentos.value = [];
+    }
 
-  } catch (err) {
-    console.error('Error en buscarParticipantes:', err);
-    participantes.value = [];
-    participanteSeleccionado.value = null;
-    documentos.value = [];
-  }
+  } catch (err) {
+    console.error('Error en buscarParticipantes:', err);
+    participantes.value = [];
+    participanteSeleccionado.value = null;
+    documentos.value = [];
+  }
 };
 
 const seleccionarParticipante = async (p) => {
-  participanteSeleccionado.value = p;
-  try {
-    const docRes = await axios.get(
-      `http://localhost:3000/api/documentos?participanteId=${p.id_participante}`
-    );
-    documentos.value = docRes.data;
-  } catch (err) {
-    console.error('Error al obtener documentos:', err);
-    documentos.value = [];
-  }
+  participanteSeleccionado.value = p;
+  try {
+    // CAMBIO: Usar API_URL
+    const docRes = await axios.get(
+      `${API_URL}/api/documentos?participanteId=${p.id_participante}`
+    );
+    documentos.value = docRes.data;
+  } catch (err) {
+    console.error('Error al obtener documentos:', err);
+    documentos.value = [];
+  }
 }
 
 // Lógica para descargar el PDF
 const descargarPDF = () => {
-  if (!participanteSeleccionado.value || !cardParticipante.value) {
-    // Reemplazado alert con console.error
-    console.error('Por favor, seleccione un participante para descargar el PDF.');
-    return;
-  }
+  if (!participanteSeleccionado.value || !cardParticipante.value) {
+    // Reemplazado alert con console.error
+    console.error('Por favor, seleccione un participante para descargar el PDF.');
+    return;
+  }
 
-  const opt = {
-    margin: 1,
-    filename: `Participante_${participanteSeleccionado.value.codigo}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true }, // Se añade useCORS: true aquí
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  };
+  const opt = {
+    margin: 1,
+    filename: `Participante_${participanteSeleccionado.value.codigo}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true }, // Se añade useCORS: true aquí
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
 
-  html2pdf().from(cardParticipante.value).set(opt).save();
+  html2pdf().from(cardParticipante.value).set(opt).save();
 };
 </script>
 

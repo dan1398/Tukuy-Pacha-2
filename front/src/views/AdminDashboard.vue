@@ -444,6 +444,10 @@ import { VueTelInput } from 'vue-tel-input';
 import 'vue-tel-input/vue-tel-input.css';
 import html2pdf from 'html2pdf.js';
 
+// --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
+const API_URL = 'https://tukuy-pacha-2.onrender.com';
+// --------------------------------------------------
+
 const router = useRouter()
 const usuario = ref({})
 const busquedaId = ref('')
@@ -608,7 +612,8 @@ watch(mostrarUsuarios, async (value) => {
   if (value) {
     isLoading.value = true;
     try {
-      const res = await axios.get('http://localhost:3000/api/usuarios')
+      // CAMBIO: Usar API_URL
+      const res = await axios.get(`${API_URL}/api/usuarios`)
       usuarios.value = res.data
       currentPage.value = 1; 
       busquedaUsuario.value = '';
@@ -625,7 +630,8 @@ watch(mostrarPatrocinadores, async (value) => {
   if (value) {
     isLoadingPatrocinadores.value = true;
     try {
-      const res = await axios.get('http://localhost:3000/api/patrocinadores')
+      // CAMBIO: Usar API_URL
+      const res = await axios.get(`${API_URL}/api/patrocinadores`)
       patrocinadores.value = res.data;
       currentPatrocinadorPage.value = 1;
       busquedaPatrocinador.value = '';
@@ -653,8 +659,9 @@ watch(busquedaId, (newValue) => {
 
 const buscarParticipantes = async () => {
   try {
+    // CAMBIO: Usar API_URL
     const res = await axios.get(
-      `http://localhost:3000/api/participantes/buscar?termino=${busquedaId.value}`
+      `${API_URL}/api/participantes/buscar?termino=${busquedaId.value}`
     );
     participantes.value = res.data;
     participanteSeleccionado.value = null;
@@ -677,8 +684,9 @@ const seleccionarParticipante = async (participante) => {
   participanteSeleccionado.value = participante;
   
   try {
+    // CAMBIO: Usar API_URL
     const docRes = await axios.get(
-      `http://localhost:3000/api/documentos?participanteId=${participante.id_participante}`
+      `${API_URL}/api/documentos?participanteId=${participante.id_participante}`
     );
     documentos.value = docRes.data;
   } catch (err) {
@@ -723,7 +731,8 @@ const cancelarEdicion = (usuarioEnTabla) => {
 const eliminarUsuarioLocal = async (id) => {
   console.log('Solicitud de eliminación de usuario para el ID:', id);
   try {
-    await axios.delete(`http://localhost:3000/api/usuarios/${id}`)
+    // CAMBIO: Usar API_URL
+    await axios.delete(`${API_URL}/api/usuarios/${id}`)
     usuarios.value = usuarios.value.filter(u => u.id_usuario !== id)
     if (editandoId.value === id) editandoId.value = null
     console.log('Usuario eliminado de la base de datos')
@@ -740,7 +749,8 @@ const eliminarUsuarioLocal = async (id) => {
 const getPatrocinadores = async () => {
   isLoadingPatrocinadores.value = true;
   try {
-    const res = await axios.get('http://localhost:3000/api/patrocinadores');
+    // CAMBIO: Usar API_URL
+    const res = await axios.get(`${API_URL}/api/patrocinadores`);
     patrocinadores.value = res.data;
   } catch (err) {
     console.error('Error al cargar patrocinadores:', err);
@@ -758,7 +768,8 @@ const guardarCambios = async (usuarioEditado) => {
       apellido_materno: usuarioEditado.apellido_materno,
       rol: usuarioEditado.rol
     };
-    await axios.put(`http://localhost:3000/api/usuarios/${usuarioEditado.id_usuario}`, dataToUpdate);
+    // CAMBIO: Usar API_URL
+    await axios.put(`${API_URL}/api/usuarios/${usuarioEditado.id_usuario}`, dataToUpdate);
     console.log('Cambios de usuario guardados en la base de datos');
   } catch (err) {
     console.error('Error al guardar cambios:', err);
@@ -772,7 +783,8 @@ const guardarCambios = async (usuarioEditado) => {
 const restablecerContrasena = async (id) => {
   console.log('Solicitud de restablecimiento de contraseña para el ID:', id);
   try {
-    const res = await axios.post(`http://localhost:3000/api/usuarios/${id}/restablecer-contrasena`);
+    // CAMBIO: Usar API_URL
+    const res = await axios.post(`${API_URL}/api/usuarios/${id}/restablecer-contrasena`);
     console.log(res.data.mensaje);
   } catch (err) {
     console.error('Error al restablecer contraseña:', err);
@@ -830,7 +842,8 @@ const guardarCambiosPatrocinador = async (patrocinadorEditado) => {
       celular: patrocinadorEditado.celular,
       correo: patrocinadorEditado.correo
     };
-    await axios.put(`http://localhost:3000/api/patrocinadores/${patrocinadorEditado.id_patrocinador}`, dataToUpdate);
+    // CAMBIO: Usar API_URL
+    await axios.put(`${API_URL}/api/patrocinadores/${patrocinadorEditado.id_patrocinador}`, dataToUpdate);
     console.log('Cambios de patrocinador guardados en la base de datos');
   } catch (err) {
     console.error('Error al guardar cambios del patrocinador:', err);
@@ -851,7 +864,8 @@ const onPatrocinadorCelularBlur = (id) => {
 
 const eliminarPatrocinador = async (id) => {
   try {
-    await axios.delete(`http://localhost:3000/api/patrocinadores/${id}`);
+    // CAMBIO: Usar API_URL
+    await axios.delete(`${API_URL}/api/patrocinadores/${id}`);
     patrocinadores.value = patrocinadores.value.filter(p => p.id_patrocinador !== id);
     if (editandoPatrocinadorId.value === id) editandoPatrocinadorId.value = null;
     console.log('Patrocinador eliminado de la base de datos');

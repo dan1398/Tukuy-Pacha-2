@@ -227,6 +227,10 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
+// --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
+const API_URL = 'https://tukuy-pacha-2.onrender.com';
+// --------------------------------------------------
+
 const router = useRouter()
 const codigo = ref('')
 const nombre = ref('')
@@ -257,351 +261,354 @@ const correoPatrocinador = ref('')
 const idPatrocinador = ref(null)
 
 function handleCodigoInput(e) {
-  let value = e.target.value.toUpperCase()
-  
-  if ((value.startsWith('TKC') || value.startsWith('TKE')) && value.length === 3) {
-    value = value + ' '
-  }
-  
-  if (value.length > 8) {
-    value = value.substring(0, 8)
-  }
-  
-  if (value.length <= 3 && !/^TKC|TKE$/i.test(value)) {
-    value = value.replace(/[^TKCtke]/gi, '')
-  }
-  
-  if (value.length > 4) {
-    const prefix = value.substring(0, 4)
-    const numbers = value.substring(4).replace(/\D/g, '')
-    value = prefix + numbers
-  }
-  
-  codigo.value = value
+  let value = e.target.value.toUpperCase()
+  
+  if ((value.startsWith('TKC') || value.startsWith('TKE')) && value.length === 3) {
+    value = value + ' '
+  }
+  
+  if (value.length > 8) {
+    value = value.substring(0, 8)
+  }
+  
+  if (value.length <= 3 && !/^TKC|TKE$/i.test(value)) {
+    value = value.replace(/[^TKCtke]/gi, '')
+  }
+  
+  if (value.length > 4) {
+    const prefix = value.substring(0, 4)
+    const numbers = value.substring(4).replace(/\D/g, '')
+    value = prefix + numbers
+  }
+  
+  codigo.value = value
 }
 
 function validarCodigo() {
-  const regex = /^(TKC|TKE)\s\d{4}$/
-  if (!regex.test(codigo.value)) {
-    errorCodigo.value = 'Formato inválido. Debe ser TKC/TKE seguido de 4 dígitos (ej: TKC 2905)'
-    return false
-  }
-  errorCodigo.value = ''
-  return true
+  const regex = /^(TKC|TKE)\s\d{4}$/
+  if (!regex.test(codigo.value)) {
+    errorCodigo.value = 'Formato inválido. Debe ser TKC/TKE seguido de 4 dígitos (ej: TKC 2905)'
+    return false
+  }
+  errorCodigo.value = ''
+  return true
 }
 
 const departamentosBolivia = [
-    'La Paz', 'Cochabamba', 'Santa Cruz', 'Oruro', 
-    'Potosí', 'Tarija', 'Chuquisaca', 'Beni', 'Pando'
+    'La Paz', 'Cochabamba', 'Santa Cruz', 'Oruro', 
+    'Potosí', 'Tarija', 'Chuquisaca', 'Beni', 'Pando'
 ];
 
 const validarDireccion = () => {
-    const direccionValue = direccion.value.trim();
-    
-    const valido = departamentosBolivia.some(depto => 
-        direccionValue.includes(depto)
-    );
-    
-    if (!valido) {
-        errorDireccion.value = `La dirección debe incluir un departamento boliviano válido: ${departamentosBolivia.join(', ')}`;
-        return false;
-    }
-    
-    const regex = /^(Calle|Av\.|Avenida|Avenida|Pasaje|Plaza|Barrio|Zona)\s.+/i;
-    if (!regex.test(direccionValue)) {
-        errorDireccion.value = 'Formato sugerido: Tipo de vía + Nombre + Número + Departamento (ej: Av. Arce 1234, La Paz)';
-        return false;
-    }
-    
-    errorDireccion.value = '';
-    return true;
+    const direccionValue = direccion.value.trim();
+    
+    const valido = departamentosBolivia.some(depto => 
+        direccionValue.includes(depto)
+    );
+    
+    if (!valido) {
+        errorDireccion.value = `La dirección debe incluir un departamento boliviano válido: ${departamentosBolivia.join(', ')}`;
+        return false;
+    }
+    
+    const regex = /^(Calle|Av\.|Avenida|Avenida|Pasaje|Plaza|Barrio|Zona)\s.+/i;
+    if (!regex.test(direccionValue)) {
+        errorDireccion.value = 'Formato sugerido: Tipo de vía + Nombre + Número + Departamento (ej: Av. Arce 1234, La Paz)';
+        return false;
+    }
+    
+    errorDireccion.value = '';
+    return true;
 };
 
 function formatearCelular(e) {
-  let value = e.target.value
-  
-  value = value.replace(/\D/g, '')
-  
-  if (value.length > 8) {
-    value = value.substring(0, 8)
-  }
-  
-  celular.value = value
+  let value = e.target.value
+  
+  value = value.replace(/\D/g, '')
+  
+  if (value.length > 8) {
+    value = value.substring(0, 8)
+  }
+  
+  celular.value = value
 }
 
 function validarCelular() {
-  const value = celular.value.trim()
-  
-  const regex = /^[67]\d{7}$/
-  
-  if (!regex.test(value)) {
-    errorCelular.value = 'Número inválido. Debe tener 8 dígitos y comenzar con 6 o 7.'
-    return false
-  }
-  
-  errorCelular.value = ''
-  return true
+  const value = celular.value.trim()
+  
+  const regex = /^[67]\d{7}$/
+  
+  if (!regex.test(value)) {
+    errorCelular.value = 'Número inválido. Debe tener 8 dígitos y comenzar con 6 o 7.'
+    return false
+  }
+  
+  errorCelular.value = ''
+  return true
 }
 
 async function buscarPatrocinadores() {
-  if (busquedaPatrocinador.value.length < 3) {
-    resultadosBusqueda.value = []
-    return
-  }
+  if (busquedaPatrocinador.value.length < 3) {
+    resultadosBusqueda.value = []
+    return
+  }
 
-  try {
-    const response = await axios.get('http://localhost:3000/api/patrocinadores', {
-      params: {
-        busqueda: busquedaPatrocinador.value
-      }
-    })
-    resultadosBusqueda.value = response.data
-  } catch (error) {
-    console.error('Error al buscar patrocinadores:', error)
-    resultadosBusqueda.value = []
-  }
+  try {
+    // CAMBIO: Usar API_URL
+    const response = await axios.get(`${API_URL}/api/patrocinadores`, {
+      params: {
+        busqueda: busquedaPatrocinador.value
+      }
+    })
+    resultadosBusqueda.value = response.data
+  } catch (error) {
+    console.error('Error al buscar patrocinadores:', error)
+    resultadosBusqueda.value = []
+  }
 }
 
 function seleccionarPatrocinador(patrocinador) {
-  nombrePatrocinador.value = patrocinador.nombre
-  apellidoPaternoPatrocinador.value = patrocinador.apellido_paterno || ''
-  apellidoMaternoPatrocinador.value = patrocinador.apellido_materno || ''
-  celularPatrocinador.value = patrocinador.celular || ''
-  correoPatrocinador.value = patrocinador.correo || ''
-  idPatrocinador.value = patrocinador.id_patrocinador
-  resultadosBusqueda.value = []
-  busquedaPatrocinador.value = ''
+  nombrePatrocinador.value = patrocinador.nombre
+  apellidoPaternoPatrocinador.value = patrocinador.apellido_paterno || ''
+  apellidoMaternoPatrocinador.value = patrocinador.apellido_materno || ''
+  celularPatrocinador.value = patrocinador.celular || ''
+  correoPatrocinador.value = patrocinador.correo || ''
+  idPatrocinador.value = patrocinador.id_patrocinador
+  resultadosBusqueda.value = []
+  busquedaPatrocinador.value = ''
 }
 
 function limpiarBusquedaPatrocinador() {
-  busquedaPatrocinador.value = ''
-  resultadosBusqueda.value = []
-  nombrePatrocinador.value = ''
-  apellidoPaternoPatrocinador.value = ''
-  apellidoMaternoPatrocinador.value = ''
-  celularPatrocinador.value = ''
-  correoPatrocinador.value = ''
-  idPatrocinador.value = null
+  busquedaPatrocinador.value = ''
+  resultadosBusqueda.value = []
+  nombrePatrocinador.value = ''
+  apellidoPaternoPatrocinador.value = ''
+  apellidoMaternoPatrocinador.value = ''
+  celularPatrocinador.value = ''
+  correoPatrocinador.value = ''
+  idPatrocinador.value = null
 }
 
 function agregarDocumento() {
-  documentos.value.push({ tipo: '', archivo: null })
+  documentos.value.push({ tipo: '', archivo: null })
 }
 
 function eliminarDocumento(index) {
-  documentos.value.splice(index, 1)
+  documentos.value.splice(index, 1)
 }
 
 function handleArchivo(e, index) {
-  if (!e || !e.target || !e.target.files || !e.target.files[0]) return
-  const selected = e.target.files[0]
-  const tiposPermitidos = [
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  ]
-  if (!tiposPermitidos.includes(selected.type)) {
-    alert('Tipo de archivo no permitido. Solo se permiten PDF, imágenes (JPEG, PNG) y hojas de cálculo (Excel).')
-    e.target.value = ''
-    documentos.value[index].archivo = null
-    return
-  }
-  documentos.value[index].archivo = selected
+  if (!e || !e.target || !e.target.files || !e.target.files[0]) return
+  const selected = e.target.files[0]
+  const tiposPermitidos = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ]
+  if (!tiposPermitidos.includes(selected.type)) {
+    alert('Tipo de archivo no permitido. Solo se permiten PDF, imágenes (JPEG, PNG) y hojas de cálculo (Excel).')
+    e.target.value = ''
+    documentos.value[index].archivo = null
+    return
+  }
+  documentos.value[index].archivo = selected
 }
 
 function handleFoto(e) {
-  const file = e.target.files[0]
-  if (!file) {
-    foto.value = null;
-    return
-  }
-  const tiposPermitidos = ['image/jpeg', 'image/png']
-  if (!tiposPermitidos.includes(file.type)) {
-    alert('Solo se permiten imágenes JPG o PNG para la foto del participante.')
-    e.target.value = ''
-    foto.value = null
-    return
-  }
-  foto.value = file
+  const file = e.target.files[0]
+  if (!file) {
+    foto.value = null;
+    return
+  }
+  const tiposPermitidos = ['image/jpeg', 'image/png']
+  if (!tiposPermitidos.includes(file.type)) {
+    alert('Solo se permiten imágenes JPG o PNG para la foto del participante.')
+    e.target.value = ''
+    foto.value = null
+    return
+  }
+  foto.value = file
 }
 
 // --- FUNCIÓN CLAVE CORREGIDA CON BASE EN EL LOG ---
 function procesarErroresServidor(error) {
-  erroresServidor.value = {};
-  
-  let generalErrorMessage = 'Error al registrar. Por favor, revise los datos ingresados.';
+  erroresServidor.value = {};
+  
+  let generalErrorMessage = 'Error al registrar. Por favor, revise los datos ingresados.';
 
-  const responseData = error.response?.data;
-  
-  // 1. Intentar obtener el objeto de errores detallados (si el backend lo envía)
-  const erroresDetallados = responseData?.errores;
-  if (erroresDetallados && typeof erroresDetallados === 'object') {
-    for (const key in erroresDetallados) {
-        const clave = (key.toLowerCase() === 'ci') ? 'CI' : key; 
-        erroresServidor.value[clave] = erroresDetallados[key];
-    }
-    return generalErrorMessage;
-  }
-  
-  // 2. BUSCAR EL ERROR ESPECÍFICO EN LA PROPIEDAD 'error' (según el log)
-  const serverErrorMsg = responseData?.error;
-  
-  if (serverErrorMsg) {
-      const lowerCaseMsg = serverErrorMsg.toLowerCase();
-      
-      // Mapear error de código duplicado
-      if (lowerCaseMsg.includes('código') && (lowerCaseMsg.includes('existe') || lowerCaseMsg.includes('duplicado') || lowerCaseMsg.includes('unique'))) {
-          // Asignar el error al campo 'codigo'
-          erroresServidor.value.codigo = serverErrorMsg;
-          return 'El **Código del Participante** ya existe. Por favor, use uno diferente.';
-      }
-      // Mapear error de CI duplicado (por si acaso)
-      if (lowerCaseMsg.includes('ci') && (lowerCaseMsg.includes('existe') || lowerCaseMsg.includes('duplicado') || lowerCaseMsg.includes('unique'))) {
-          erroresServidor.value.CI = serverErrorMsg;
-          return 'La **Cédula de Identidad** ya está registrada.';
-      }
+  const responseData = error.response?.data;
+  
+  // 1. Intentar obtener el objeto de errores detallados (si el backend lo envía)
+  const erroresDetallados = responseData?.errores;
+  if (erroresDetallados && typeof erroresDetallados === 'object') {
+    for (const key in erroresDetallados) {
+        const clave = (key.toLowerCase() === 'ci') ? 'CI' : key; 
+        erroresServidor.value[clave] = erroresDetallados[key];
+    }
+    return generalErrorMessage;
+  }
+  
+  // 2. BUSCAR EL ERROR ESPECÍFICO EN LA PROPIEDAD 'error' (según el log)
+  const serverErrorMsg = responseData?.error;
+  
+  if (serverErrorMsg) {
+      const lowerCaseMsg = serverErrorMsg.toLowerCase();
+      
+      // Mapear error de código duplicado
+      if (lowerCaseMsg.includes('código') && (lowerCaseMsg.includes('existe') || lowerCaseMsg.includes('duplicado') || lowerCaseMsg.includes('unique'))) {
+          // Asignar el error al campo 'codigo'
+          erroresServidor.value.codigo = serverErrorMsg;
+          return 'El **Código del Participante** ya existe. Por favor, use uno diferente.';
+      }
+      // Mapear error de CI duplicado (por si acaso)
+      if (lowerCaseMsg.includes('ci') && (lowerCaseMsg.includes('existe') || lowerCaseMsg.includes('duplicado') || lowerCaseMsg.includes('unique'))) {
+          erroresServidor.value.CI = serverErrorMsg;
+          return 'La **Cédula de Identidad** ya está registrada.';
+      }
 
-      // Si encuentra el error pero no lo puede mapear a un campo, lo devuelve como mensaje general
-      return serverErrorMsg;
-  }
+      // Si encuentra el error pero no lo puede mapear a un campo, lo devuelve como mensaje general
+      return serverErrorMsg;
+  }
 
-  // 3. Fallback: Intentar obtener un mensaje simple o devolver el genérico
-  return responseData?.mensaje 
-         || error.message
-         || generalErrorMessage;
+  // 3. Fallback: Intentar obtener un mensaje simple o devolver el genérico
+  return responseData?.mensaje 
+         || error.message
+         || generalErrorMessage;
 }
 
 
 // --- Función de Registro Principal ---
 
 async function registrarParticipante() {
-  mensaje.value = ''
-  mensajeTipo.value = ''
-  errorCodigo.value = ''
-  errorDireccion.value = ''
-  errorCelular.value = ''
-  erroresServidor.value = {} 
+  mensaje.value = ''
+  mensajeTipo.value = ''
+  errorCodigo.value = ''
+  errorDireccion.value = ''
+  errorCelular.value = ''
+  erroresServidor.value = {} 
 
-  // 1. Validaciones locales
-  if (!validarCodigo() || !validarDireccion() || !validarCelular()) {
-    mensaje.value = 'Por favor corrija los campos marcados localmente.'
-    mensajeTipo.value = 'danger'
-    return
-  }
-  
-  try {
-    const formData = new FormData()
-    formData.append('codigo', codigo.value) 
-    formData.append('nombre', nombre.value)
-    formData.append('apellido_paterno', apellidoPaterno.value)
-    formData.append('apellido_materno', apellidoMaterno.value)
-    formData.append('CI', ci.value) 
-    formData.append('fecha_nacimiento', fechaNacimiento.value) 
-    formData.append('direccion', direccion.value)
-    formData.append('celular', celular.value)
-    formData.append('id_patrocinador', idPatrocinador.value);
-    if (foto.value) {
-      formData.append('foto', foto.value)
-    }
+  // 1. Validaciones locales
+  if (!validarCodigo() || !validarDireccion() || !validarCelular()) {
+    mensaje.value = 'Por favor corrija los campos marcados localmente.'
+    mensajeTipo.value = 'danger'
+    return
+  }
+  
+  try {
+    const formData = new FormData()
+    formData.append('codigo', codigo.value) 
+    formData.append('nombre', nombre.value)
+    formData.append('apellido_paterno', apellidoPaterno.value)
+    formData.append('apellido_materno', apellidoMaterno.value)
+    formData.append('CI', ci.value) 
+    formData.append('fecha_nacimiento', fechaNacimiento.value) 
+    formData.append('direccion', direccion.value)
+    formData.append('celular', celular.value)
+    formData.append('id_patrocinador', idPatrocinador.value);
+    if (foto.value) {
+      formData.append('foto', foto.value)
+    }
 
-    // 2. REGISTRO DEL PARTICIPANTE
-    const res = await axios.post('http://localhost:3000/api/participantes', formData)
-    const id_participante = res.data.id
-    
-    // Obtener ID de usuario para documentos
-    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
-    const id_usuario = usuario.id
+    // 2. REGISTRO DEL PARTICIPANTE
+    // CAMBIO: Usar API_URL
+    const res = await axios.post(`${API_URL}/api/participantes`, formData)
+    const id_participante = res.data.id
+    
+    // Obtener ID de usuario para documentos
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
+    const id_usuario = usuario.id
 
-    if (!id_usuario) {
-      throw new Error('No se encontró el ID de usuario en el almacenamiento local. Por favor, inicie sesión nuevamente.')
-    }
-    
-    let erroresDocumentosEncontrados = false;
-    // 3. REGISTRO DE DOCUMENTOS
-    for (let i = 0; i < documentos.value.length; i++) {
-      const doc = documentos.value[i]
-      if (doc.archivo) {
-        const docForm = new FormData()
-        docForm.append('archivo', doc.archivo)
-        docForm.append('tipo_documento', doc.tipo)
-        docForm.append('id_participante', id_participante)
-        docForm.append('id_usuario', id_usuario)
+    if (!id_usuario) {
+      throw new Error('No se encontró el ID de usuario en el almacenamiento local. Por favor, inicie sesión nuevamente.')
+    }
+    
+    let erroresDocumentosEncontrados = false;
+    // 3. REGISTRO DE DOCUMENTOS
+    for (let i = 0; i < documentos.value.length; i++) {
+      const doc = documentos.value[i]
+      if (doc.archivo) {
+        const docForm = new FormData()
+        docForm.append('archivo', doc.archivo)
+        docForm.append('tipo_documento', doc.tipo)
+        docForm.append('id_participante', id_participante)
+        docForm.append('id_usuario', id_usuario)
 
-        try {
-          await axios.post('http://localhost:3000/api/documentos', docForm)
-        } catch (docError) {
-          erroresDocumentosEncontrados = true;
-          const docErrorMessage = docError.response?.data?.mensaje 
-                                || docError.response?.data?.error
-                                || 'Error al subir documento';
-          
-          if (docErrorMessage.toLowerCase().includes('tipo')) {
-             erroresServidor.value[`documento_${i}_tipo`] = docErrorMessage;
-          } else if (docErrorMessage.toLowerCase().includes('archivo') || docErrorMessage.toLowerCase().includes('file')) {
-             erroresServidor.value[`documento_${i}_archivo`] = docErrorMessage;
-          } else {
-             console.error(`Error en documento ${i+1}:`, docErrorMessage);
-          }
-        }
-      }
-    }
-    
-    if (erroresDocumentosEncontrados) {
-      mensaje.value = 'Participante registrado, pero hubo errores al subir algunos documentos. Por favor, revise los campos marcados.';
-      mensajeTipo.value = 'danger';
-      return; 
-    }
+        try {
+          // CAMBIO: Usar API_URL
+          await axios.post(`${API_URL}/api/documentos`, docForm)
+        } catch (docError) {
+          erroresDocumentosEncontrados = true;
+          const docErrorMessage = docError.response?.data?.mensaje 
+                                || docError.response?.data?.error
+                                || 'Error al subir documento';
+          
+          if (docErrorMessage.toLowerCase().includes('tipo')) {
+             erroresServidor.value[`documento_${i}_tipo`] = docErrorMessage;
+          } else if (docErrorMessage.toLowerCase().includes('archivo') || docErrorMessage.toLowerCase().includes('file')) {
+             erroresServidor.value[`documento_${i}_archivo`] = docErrorMessage;
+          } else {
+             console.error(`Error en documento ${i+1}:`, docErrorMessage);
+          }
+        }
+      }
+    }
+    
+    if (erroresDocumentosEncontrados) {
+      mensaje.value = 'Participante registrado, pero hubo errores al subir algunos documentos. Por favor, revise los campos marcados.';
+      mensajeTipo.value = 'danger';
+      return; 
+    }
 
-    // Éxito total
-    mensaje.value = 'Participante y documentos registrados correctamente. 🎉'
-    mensajeTipo.value = 'success'
-    
-    // Limpiar formulario al éxito
-    codigo.value = ''
-    nombre.value = ''
-    apellidoPaterno.value = ''
-    apellidoMaterno.value = ''
-    ci.value = ''
-    fechaNacimiento.value = ''
-    direccion.value = ''
-    celular.value = ''
-    foto.value = null
-    documentos.value = [{ tipo: '', archivo: null }]
-    limpiarBusquedaPatrocinador() 
+    // Éxito total
+    mensaje.value = 'Participante y documentos registrados correctamente. 🎉'
+    mensajeTipo.value = 'success'
+    
+    // Limpiar formulario al éxito
+    codigo.value = ''
+    nombre.value = ''
+    apellidoPaterno.value = ''
+    apellidoMaterno.value = ''
+    ci.value = ''
+    fechaNacimiento.value = ''
+    direccion.value = ''
+    celular.value = ''
+    foto.value = null
+    documentos.value = [{ tipo: '', archivo: null }]
+    limpiarBusquedaPatrocinador() 
 
-  } catch (err) {
-    // 4. MANEJO DE ERROR DEL PARTICIPANTE (El principal)
-    
-    // El log de diagnóstico se mantiene por si hay otros errores
-    console.error('--- ERROR COMPLETO DEL SERVIDOR ---');
-    if (err.response) {
-        console.error('Data del error:', err.response.data);
-        console.error('Status:', err.response.status);
-    } else if (err.request) {
-        console.error('No se recibió respuesta del servidor.');
-    } else {
-        console.error('Error al configurar la petición:', err.message);
-    }
-    console.error('------------------------------------');
-    
-    const generalErrorMessage = procesarErroresServidor(err);
+  } catch (err) {
+    // 4. MANEJO DE ERROR DEL PARTICIPANTE (El principal)
+    
+    // El log de diagnóstico se mantiene por si hay otros errores
+    console.error('--- ERROR COMPLETO DEL SERVIDOR ---');
+    if (err.response) {
+        console.error('Data del error:', err.response.data);
+        console.error('Status:', err.response.status);
+    } else if (err.request) {
+        console.error('No se recibió respuesta del servidor.');
+    } else {
+        console.error('Error al configurar la petición:', err.message);
+    }
+    console.error('------------------------------------');
+    
+    const generalErrorMessage = procesarErroresServidor(err);
 
-    if (Object.keys(erroresServidor.value).length > 0) {
-      // Si se mapeó el error a un campo (ej: código), mostramos un mensaje que remite al campo.
-      mensaje.value = generalErrorMessage || 'Error al registrar. Por favor, corrija los campos marcados con rojo.';
-    } else {
-      // Si no se mapeó, mostramos el mensaje que pudimos extraer o el genérico.
-      mensaje.value = 'Error al registrar participante. Detalles: ' + generalErrorMessage;
-    }
-    
-    mensajeTipo.value = 'danger';
-  }
+    if (Object.keys(erroresServidor.value).length > 0) {
+      // Si se mapeó el error a un campo (ej: código), mostramos un mensaje que remite al campo.
+      mensaje.value = generalErrorMessage || 'Error al registrar. Por favor, corrija los campos marcados con rojo.';
+    } else {
+      // Si no se mapeó, mostramos el mensaje que pudimos extraer o el genérico.
+      mensaje.value = 'Error al registrar participante. Detalles: ' + generalErrorMessage;
+    }
+    
+    mensajeTipo.value = 'danger';
+  }
 }
 
 function volver() {
-  router.push('/adminDashboard')
+  router.push('/adminDashboard')
 }
 </script>
 

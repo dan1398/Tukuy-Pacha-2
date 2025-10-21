@@ -43,6 +43,10 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
+// --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
+const API_URL = 'https://tukuy-pacha-2.onrender.com';
+// --------------------------------------------------
+
 const router = useRouter()
 const nombre = ref('')
 const apellido_paterno = ref('')
@@ -52,46 +56,47 @@ const rol = ref('Personal')
 const mensaje = ref('')
 
 const registrarUsuario = async () => {
-  // Validaciones manuales antes de la llamada a la API
-  if (!nombre.value) {
-    mensaje.value = 'El nombre es obligatorio.'
-    return
-  }
-  if (!apellido_paterno.value) {
-    mensaje.value = 'El apellido paterno es obligatorio.'
-    return
-  }
-  if (!correo.value) {
-    mensaje.value = 'El correo es obligatorio.'
-    return
-  }
-  
-  // Expresión regular para validar el correo
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(correo.value)) {
-    mensaje.value = 'Por favor, ingrese un correo electrónico válido.'
-    return
-  }
+  // Validaciones manuales antes de la llamada a la API
+  if (!nombre.value) {
+    mensaje.value = 'El nombre es obligatorio.'
+    return
+  }
+  if (!apellido_paterno.value) {
+    mensaje.value = 'El apellido paterno es obligatorio.'
+    return
+  }
+  if (!correo.value) {
+    mensaje.value = 'El correo es obligatorio.'
+    return
+  }
+  
+  // Expresión regular para validar el correo
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(correo.value)) {
+    mensaje.value = 'Por favor, ingrese un correo electrónico válido.'
+    return
+  }
 
-  try {
-    const res = await axios.post('http://localhost:3000/api/usuarios', {
-      nombre: nombre.value,
-      apellido_paterno: apellido_paterno.value,
-      apellido_materno: apellido_materno.value,
-      correo: correo.value,
-      rol: rol.value
-    })
-    mensaje.value = res.data.mensaje
-    nombre.value = apellido_paterno.value = apellido_materno.value = correo.value = ''
-    rol.value = 'Personal'
-  } catch (error) {
-    mensaje.value = 'Error al registrar usuario'
-    console.error(error)
-  }
+  try {
+    // CAMBIO: Usar API_URL
+    const res = await axios.post(`${API_URL}/api/usuarios`, {
+      nombre: nombre.value,
+      apellido_paterno: apellido_paterno.value,
+      apellido_materno: apellido_materno.value,
+      correo: correo.value,
+      rol: rol.value
+    })
+    mensaje.value = res.data.mensaje
+    nombre.value = apellido_paterno.value = apellido_materno.value = correo.value = ''
+    rol.value = 'Personal'
+  } catch (error) {
+    mensaje.value = 'Error al registrar usuario'
+    console.error(error)
+  }
 }
 
 const volver = () => {
-  router.push('/adminDashboard')
+  router.push('/adminDashboard')
 }
 </script>
 

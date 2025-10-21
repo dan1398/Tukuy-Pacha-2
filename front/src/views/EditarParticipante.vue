@@ -266,6 +266,10 @@ import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 
+// --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
+const API_URL = 'https://tukuy-pacha-2.onrender.com';
+// --------------------------------------------------
+
 const route = useRoute()
 const router = useRouter()
 
@@ -291,341 +295,349 @@ const errorPatrocinador = ref('')
 let searchTimeout = null
 
 onMounted(async () => {
-  const participanteId = route.params.id_participante
-  if (!participanteId) {
-    console.error("ID de participante no proporcionado en la ruta.")
-    router.push('/adminDashboard')
-    return
-  }
-  await cargarParticipante(participanteId)
+  const participanteId = route.params.id_participante
+  if (!participanteId) {
+    console.error("ID de participante no proporcionado en la ruta.")
+    router.push('/adminDashboard')
+    return
+  }
+  await cargarParticipante(participanteId)
 })
 
 async function cargarParticipante(id) {
-  try {
-    const [resParticipante, resDocumentos] = await Promise.all([
-      axios.get(`http://localhost:3000/api/participantes/${id}`),
-      axios.get(`http://localhost:3000/api/documentos?participanteId=${id}`)
-    ])
+  try {
+    const [resParticipante, resDocumentos] = await Promise.all([
+      // CAMBIO: Usar API_URL
+      axios.get(`${API_URL}/api/participantes/${id}`),
+      // CAMBIO: Usar API_URL
+      axios.get(`${API_URL}/api/documentos?participanteId=${id}`)
+    ])
 
-    const dataParticipante = resParticipante.data
+    const dataParticipante = resParticipante.data
 
-    participante.value = {
-      ...dataParticipante,
-      fecha_nacimiento: dataParticipante.fecha_nacimiento ? new Date(dataParticipante.fecha_nacimiento).toISOString().split('T')[0] : '',
-      patrocinador_nombre: dataParticipante.patrocinador_nombre || '',
-      patrocinador_apellido_paterno: dataParticipante.patrocinador_apellido_paterno || '',
-      patrocinador_apellido_materno: dataParticipante.patrocinador_apellido_materno || '',
-      patrocinador_celular: dataParticipante.patrocinador_celular || '',
-      patrocinador_correo: dataParticipante.patrocinador_correo || ''
-    }
+    participante.value = {
+      ...dataParticipante,
+      fecha_nacimiento: dataParticipante.fecha_nacimiento ? new Date(dataParticipante.fecha_nacimiento).toISOString().split('T')[0] : '',
+      patrocinador_nombre: dataParticipante.patrocinador_nombre || '',
+      patrocinador_apellido_paterno: dataParticipante.patrocinador_apellido_paterno || '',
+      patrocinador_apellido_materno: dataParticipante.patrocinador_apellido_materno || '',
+      patrocinador_celular: dataParticipante.patrocinador_celular || '',
+      patrocinador_correo: dataParticipante.patrocinador_correo || ''
+    }
 
-    documentos.value = resDocumentos.data.map(doc => ({
-      ...doc,
-      nuevoArchivo: null
-    }))
+    documentos.value = resDocumentos.data.map(doc => ({
+      ...doc,
+      nuevoArchivo: null
+    }))
 
-    participanteCargado.value = true
-  } catch (error) {
-    console.error("Error al cargar participante o documentos:", error)
-    mensaje.value = 'Error al cargar los datos del participante. Por favor, inténtelo de nuevo.'
-    mensajeTipo.value = 'danger'
-    participanteCargado.value = true
-  }
+    participanteCargado.value = true
+  } catch (error) {
+    console.error("Error al cargar participante o documentos:", error)
+    mensaje.value = 'Error al cargar los datos del participante. Por favor, inténtelo de nuevo.'
+    mensajeTipo.value = 'danger'
+    participanteCargado.value = true
+  }
 }
 
 // Buscar y seleccionar patrocinador
 async function buscarPatrocinadores() {
-  if (busquedaPatrocinador.value.length < 3) {
-    resultadosBusqueda.value = []
-    return
-  }
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/api/patrocinadores', {
-        params: {
-          busqueda: busquedaPatrocinador.value
-        }
-      })
-      resultadosBusqueda.value = response.data
-    } catch (error) {
-      console.error('Error al buscar patrocinadores:', error)
-      resultadosBusqueda.value = []
-    }
-  }, 300)
+  if (busquedaPatrocinador.value.length < 3) {
+    resultadosBusqueda.value = []
+    return
+  }
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(async () => {
+    try {
+      // CAMBIO: Usar API_URL
+      const response = await axios.get(`${API_URL}/api/patrocinadores`, {
+        params: {
+          busqueda: busquedaPatrocinador.value
+        }
+      })
+      resultadosBusqueda.value = response.data
+    } catch (error) {
+      console.error('Error al buscar patrocinadores:', error)
+      resultadosBusqueda.value = []
+    }
+  }, 300)
 }
 
 function seleccionarPatrocinador(patrocinador) {
-  participante.value.id_patrocinador = patrocinador.id_patrocinador
-  participante.value.patrocinador_nombre = patrocinador.nombre
-  participante.value.patrocinador_apellido_paterno = patrocinador.apellido_paterno || ''
-  participante.value.patrocinador_apellido_materno = patrocinador.apellido_materno || ''
-  participante.value.patrocinador_celular = patrocinador.celular || ''
-  participante.value.patrocinador_correo = patrocinador.correo || ''
-  resultadosBusqueda.value = []
-  busquedaPatrocinador.value = ''
+  participante.value.id_patrocinador = patrocinador.id_patrocinador
+  participante.value.patrocinador_nombre = patrocinador.nombre
+  participante.value.patrocinador_apellido_paterno = patrocinador.apellido_paterno || ''
+  participante.value.patrocinador_apellido_materno = patrocinador.apellido_materno || ''
+  participante.value.patrocinador_celular = patrocinador.celular || ''
+  participante.value.patrocinador_correo = patrocinador.correo || ''
+  resultadosBusqueda.value = []
+  busquedaPatrocinador.value = ''
 }
 
 function limpiarBusquedaPatrocinador() {
-  busquedaPatrocinador.value = ''
-  resultadosBusqueda.value = []
-  participante.value.id_patrocinador = null
-  participante.value.patrocinador_nombre = ''
-  participante.value.patrocinador_apellido_paterno = ''
-  participante.value.patrocinador_apellido_materno = ''
-  participante.value.patrocinador_celular = ''
-  participante.value.patrocinador_correo = ''
+  busquedaPatrocinador.value = ''
+  resultadosBusqueda.value = []
+  participante.value.id_patrocinador = null
+  participante.value.patrocinador_nombre = ''
+  participante.value.patrocinador_apellido_paterno = ''
+  participante.value.patrocinador_apellido_materno = ''
+  participante.value.patrocinador_celular = ''
+  participante.value.patrocinador_correo = ''
 }
 
 function validarPatrocinador() {
-  if (!participante.value.id_patrocinador) {
-    errorPatrocinador.value = 'Debe seleccionar un patrocinador antes de guardar.'
-    return false
-  }
-  errorPatrocinador.value = ''
-  return true
+  if (!participante.value.id_patrocinador) {
+    errorPatrocinador.value = 'Debe seleccionar un patrocinador antes de guardar.'
+    return false
+  }
+  errorPatrocinador.value = ''
+  return true
 }
 
 // Documentos
 function agregarDocumento() {
-  documentos.value.push({ tipo_documento: '', nuevoArchivo: null, id_documento: null, ruta_archivo: null, nombre_archivo: null })
+  documentos.value.push({ tipo_documento: '', nuevoArchivo: null, id_documento: null, ruta_archivo: null, nombre_archivo: null })
 }
 
 function eliminarDocumento(index) {
-  if (documentos.value[index].id_documento) {
-    documentosAEliminar.value.push(documentos.value[index].id_documento)
-  }
-  documentos.value.splice(index, 1)
+  if (documentos.value[index].id_documento) {
+    documentosAEliminar.value.push(documentos.value[index].id_documento)
+  }
+  documentos.value.splice(index, 1)
 }
 
 function handleArchivo(e, index) {
-  const selected = e.target?.files?.[0]
-  if (!selected) return
-  const tiposPermitidos = [
-    'application/pdf', 'image/jpeg', 'image/png',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  ]
-  if (!tiposPermitidos.includes(selected.type)) {
-    alert('Tipo de archivo no permitido.')
-    e.target.value = ''
-    return
-  }
-  documentos.value[index].nuevoArchivo = selected
-  documentos.value[index].ruta_archivo = null
-  documentos.value[index].nombre_archivo = selected.name
+  const selected = e.target?.files?.[0]
+  if (!selected) return
+  const tiposPermitidos = [
+    'application/pdf', 'image/jpeg', 'image/png',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ]
+  if (!tiposPermitidos.includes(selected.type)) {
+    alert('Tipo de archivo no permitido.')
+    e.target.value = ''
+    return
+  }
+  documentos.value[index].nuevoArchivo = selected
+  documentos.value[index].ruta_archivo = null
+  documentos.value[index].nombre_archivo = selected.name
 }
 
 // Foto del participante
 function handleFoto(e) {
-  const file = e.target.files[0]
-  if (!file) {
-    nuevaFoto.value = null
-    return
-  }
-  const tiposPermitidos = ['image/jpeg', 'image/png']
-  if (!tiposPermitidos.includes(file.type)) {
-    alert('Solo se permiten imágenes JPG o PNG.')
-    e.target.value = ''
-    nuevaFoto.value = null
-    return
-  }
-  nuevaFoto.value = file
-  eliminarFotoActual.value = false
+  const file = e.target.files[0]
+  if (!file) {
+    nuevaFoto.value = null
+    return
+  }
+  const tiposPermitidos = ['image/jpeg', 'image/png']
+  if (!tiposPermitidos.includes(file.type)) {
+    alert('Solo se permiten imágenes JPG o PNG.')
+    e.target.value = ''
+    nuevaFoto.value = null
+    return
+  }
+  nuevaFoto.value = file
+  eliminarFotoActual.value = false
 }
 
 // Validaciones
 function handleCodigoInput(e) {
-  let value = e.target.value.toUpperCase()
-  if ((value.startsWith('TKC') || value.startsWith('TKE')) && value.length === 3) {
-    value += ' '
-  }
-  if (value.length > 8) {
-    value = value.substring(0, 8)
-  }
-  if (value.length <= 3 && !/^TKC|TKE$/i.test(value)) {
-    value = value.replace(/[^TKCtke]/gi, '')
-  }
-  if (value.length > 4) {
-    const prefix = value.substring(0, 4)
-    const numbers = value.substring(4).replace(/\D/g, '')
-    value = prefix + numbers
-  }
-  participante.value.codigo = value
+  let value = e.target.value.toUpperCase()
+  if ((value.startsWith('TKC') || value.startsWith('TKE')) && value.length === 3) {
+    value += ' '
+  }
+  if (value.length > 8) {
+    value = value.substring(0, 8)
+  }
+  if (value.length <= 3 && !/^TKC|TKE$/i.test(value)) {
+    value = value.replace(/[^TKCtke]/gi, '')
+  }
+  if (value.length > 4) {
+    const prefix = value.substring(0, 4)
+    const numbers = value.substring(4).replace(/\D/g, '')
+    value = prefix + numbers
+  }
+  participante.value.codigo = value
 }
 
 function validarCodigo() {
-  const regex = /^(TKC|TKE)\s\d{4}$/
-  if (!regex.test(participante.value.codigo)) {
-    errorCodigo.value = 'Formato inválido (ej: TKC 1234)'
-    return false
-  }
-  errorCodigo.value = ''
-  return true
+  const regex = /^(TKC|TKE)\s\d{4}$/
+  if (!regex.test(participante.value.codigo)) {
+    errorCodigo.value = 'Formato inválido (ej: TKC 1234)'
+    return false
+  }
+  errorCodigo.value = ''
+  return true
 }
 
 const validarNombre = () => {
-  if (!participante.value.nombre?.trim()) {
-    errorNombre.value = 'El nombre es obligatorio.'
-    return false
-  }
-  errorNombre.value = ''
-  return true
+  if (!participante.value.nombre?.trim()) {
+    errorNombre.value = 'El nombre es obligatorio.'
+    return false
+  }
+  errorNombre.value = ''
+  return true
 }
 
 const validarApellidoPaterno = () => {
-  if (!participante.value.apellido_paterno?.trim()) {
-    errorApellidoPaterno.value = 'El apellido paterno es obligatorio.'
-    return false
-  }
-  errorApellidoPaterno.value = ''
-  return true
+  if (!participante.value.apellido_paterno?.trim()) {
+    errorApellidoPaterno.value = 'El apellido paterno es obligatorio.'
+    return false
+  }
+  errorApellidoPaterno.value = ''
+  return true
 }
 
 const validarApellidoMaterno = () => {
-  if (!participante.value.apellido_materno?.trim()) {
-    errorApellidoMaterno.value = 'El apellido materno es obligatorio.'
-    return false
-  }
-  errorApellidoMaterno.value = ''
-  return true
+  if (!participante.value.apellido_materno?.trim()) {
+    errorApellidoMaterno.value = 'El apellido materno es obligatorio.'
+    return false
+  }
+  errorApellidoMaterno.value = ''
+  return true
 }
 
 const departamentosBolivia = ['La Paz', 'Cochabamba', 'Santa Cruz', 'Oruro', 'Potosí', 'Tarija', 'Chuquisaca', 'Beni', 'Pando']
 
 const validarDireccion = () => {
-  const direccionValue = participante.value.direccion.trim()
-  const contieneDepartamento = departamentosBolivia.some(d => direccionValue.includes(d))
-  const regex = /^(Calle|Av\.|Avenida|Pasaje|Plaza|Barrio|Zona)\s.+/i
+  const direccionValue = participante.value.direccion.trim()
+  const contieneDepartamento = departamentosBolivia.some(d => direccionValue.includes(d))
+  const regex = /^(Calle|Av\.|Avenida|Pasaje|Plaza|Barrio|Zona)\s.+/i
 
-  if (!contieneDepartamento) {
-    errorDireccion.value = `Debe incluir un departamento válido: ${departamentosBolivia.join(', ')}`
-    return false
-  }
+  if (!contieneDepartamento) {
+    errorDireccion.value = `Debe incluir un departamento válido: ${departamentosBolivia.join(', ')}`
+    return false
+  }
 
-  if (!regex.test(direccionValue)) {
-    errorDireccion.value = 'Formato: Tipo de vía + Nombre + Número + Departamento'
-    return false
-  }
+  if (!regex.test(direccionValue)) {
+    errorDireccion.value = 'Formato: Tipo de vía + Nombre + Número + Departamento'
+    return false
+  }
 
-  errorDireccion.value = ''
-  return true
+  errorDireccion.value = ''
+  return true
 }
 
 function formatearCelular(e) {
-  let value = e.target.value.replace(/\D/g, '')
-  if (value.length > 8) value = value.substring(0, 8)
-  participante.value.celular = value
+  let value = e.target.value.replace(/\D/g, '')
+  if (value.length > 8) value = value.substring(0, 8)
+  participante.value.celular = value
 }
 
 function validarCelular() {
-  const value = participante.value.celular
-  const regex = /^[67]\d{7}$/
-  if (!regex.test(value)) {
-    errorCelular.value = 'Debe tener 8 dígitos y empezar con 6 o 7.'
-    return false
-  }
-  errorCelular.value = ''
-  return true
+  const value = participante.value.celular
+  const regex = /^[67]\d{7}$/
+  if (!regex.test(value)) {
+    errorCelular.value = 'Debe tener 8 dígitos y empezar con 6 o 7.'
+    return false
+  }
+  errorCelular.value = ''
+  return true
 }
 
 // ACTUALIZAR PARTICIPANTE
 async function actualizarParticipante() {
-  mensaje.value = ''
-  mensajeTipo.value = ''
-  errorCodigo.value = ''
-  errorNombre.value = ''
-  errorApellidoPaterno.value = ''
-  errorApellidoMaterno.value = ''
+  mensaje.value = ''
+  mensajeTipo.value = ''
+  errorCodigo.value = ''
+  errorNombre.value = ''
+  errorApellidoPaterno.value = ''
+  errorApellidoMaterno.value = ''
 
-  const esValido = validarCodigo() && validarNombre() && validarApellidoPaterno() && validarApellidoMaterno() && validarDireccion() && validarCelular()
-  const esValidoPatrocinador = validarPatrocinador()
+  const esValido = validarCodigo() && validarNombre() && validarApellidoPaterno() && validarApellidoMaterno() && validarDireccion() && validarCelular()
+  const esValidoPatrocinador = validarPatrocinador()
 
-  if (!esValido || !esValidoPatrocinador) {
-    mensaje.value = 'Por favor, corrija los campos marcados.'
-    mensajeTipo.value = 'danger'
-    return
-  }
+  if (!esValido || !esValidoPatrocinador) {
+    mensaje.value = 'Por favor, corrija los campos marcados.'
+    mensajeTipo.value = 'danger'
+    return
+  }
 
-  try {
-    const id_participante = participante.value.id_participante
-    const id_usuario = JSON.parse(localStorage.getItem('usuario') || '{}').id
-    if (!id_usuario) throw new Error('No se encontró el ID de usuario.')
+  try {
+    const id_participante = participante.value.id_participante
+    const id_usuario = JSON.parse(localStorage.getItem('usuario') || '{}').id
+    if (!id_usuario) throw new Error('No se encontró el ID de usuario.')
 
-    // Participante
-    const formData = new FormData()
-    formData.append('codigo', participante.value.codigo)
-    formData.append('nombre', participante.value.nombre)
-    formData.append('apellido_paterno', participante.value.apellido_paterno || '')
-    formData.append('apellido_materno', participante.value.apellido_materno || '')
-    formData.append('CI', participante.value.CI)
-    formData.append('fecha_nacimiento', participante.value.fecha_nacimiento)
-    formData.append('direccion', participante.value.direccion)
-    formData.append('celular', participante.value.celular)
-    formData.append('id_patrocinador', participante.value.id_patrocinador || null)
+    // Participante
+    const formData = new FormData()
+    formData.append('codigo', participante.value.codigo)
+    formData.append('nombre', participante.value.nombre)
+    formData.append('apellido_paterno', participante.value.apellido_paterno || '')
+    formData.append('apellido_materno', participante.value.apellido_materno || '')
+    formData.append('CI', participante.value.CI)
+    formData.append('fecha_nacimiento', participante.value.fecha_nacimiento)
+    formData.append('direccion', participante.value.direccion)
+    formData.append('celular', participante.value.celular)
+    formData.append('id_patrocinador', participante.value.id_patrocinador || null)
 
-    if (nuevaFoto.value) {
-      formData.append('foto', nuevaFoto.value)
-    } else if (eliminarFotoActual.value) {
-      formData.append('mantener_foto', 'false')
-    }
+    if (nuevaFoto.value) {
+      formData.append('foto', nuevaFoto.value)
+    } else if (eliminarFotoActual.value) {
+      formData.append('mantener_foto', 'false')
+    }
 
-    await axios.put(`http://localhost:3000/api/participantes/${id_participante}`, formData)
+    // CAMBIO: Usar API_URL
+    await axios.put(`${API_URL}/api/participantes/${id_participante}`, formData)
 
-    // Eliminar documentos
-    const deletePromises = documentosAEliminar.value.map(docId =>
-      axios.delete(`http://localhost:3000/api/documentos/${docId}`)
-    )
-    await Promise.all(deletePromises)
-    documentosAEliminar.value = []
+    // Eliminar documentos
+    const deletePromises = documentosAEliminar.value.map(docId =>
+      // CAMBIO: Usar API_URL
+      axios.delete(`${API_URL}/api/documentos/${docId}`)
+    )
+    await Promise.all(deletePromises)
+    documentosAEliminar.value = []
 
-    // Agregar o actualizar documentos
-    const documentPromises = []
-    for (const doc of documentos.value) {
-      const docForm = new FormData()
-      docForm.append('tipo_documento', doc.tipo_documento)
-      docForm.append('id_participante', id_participante)
-      docForm.append('id_usuario', id_usuario)
+    // Agregar o actualizar documentos
+    const documentPromises = []
+    for (const doc of documentos.value) {
+      const docForm = new FormData()
+      docForm.append('tipo_documento', doc.tipo_documento)
+      docForm.append('id_participante', id_participante)
+      docForm.append('id_usuario', id_usuario)
 
-      if (doc.nuevoArchivo) {
-        docForm.append('archivo', doc.nuevoArchivo)
-        if (doc.id_documento) {
-          documentPromises.push(axios.put(`http://localhost:3000/api/documentos/${doc.id_documento}`, docForm))
-        } else {
-          documentPromises.push(axios.post('http://localhost:3000/api/documentos', docForm))
-        }
-      } else if (doc.id_documento) {
-        documentPromises.push(axios.put(`http://localhost:3000/api/documentos/${doc.id_documento}`, {
-          tipo_documento: doc.tipo_documento,
-          id_participante,
-          id_usuario
-        }))
-      }
-    }
-    await Promise.all(documentPromises)
+      if (doc.nuevoArchivo) {
+        docForm.append('archivo', doc.nuevoArchivo)
+        if (doc.id_documento) {
+          // CAMBIO: Usar API_URL
+          documentPromises.push(axios.put(`${API_URL}/api/documentos/${doc.id_documento}`, docForm))
+        } else {
+          // CAMBIO: Usar API_URL
+          documentPromises.push(axios.post(`${API_URL}/api/documentos`, docForm))
+        }
+      } else if (doc.id_documento) {
+        // CAMBIO: Usar API_URL
+        documentPromises.push(axios.put(`${API_URL}/api/documentos/${doc.id_documento}`, {
+          tipo_documento: doc.tipo_documento,
+          id_participante,
+          id_usuario
+        }))
+      }
+    }
+    await Promise.all(documentPromises)
 
-    mensaje.value = 'Participante y documentos actualizados correctamente.'
-    mensajeTipo.value = 'success'
+    mensaje.value = 'Participante y documentos actualizados correctamente.'
+    mensajeTipo.value = 'success'
 
-    await cargarParticipante(id_participante)
-    nuevaFoto.value = null
-    eliminarFotoActual.value = false
+    await cargarParticipante(id_participante)
+    nuevaFoto.value = null
+    eliminarFotoActual.value = false
 
-  } catch (err) {
-    console.error("Error al actualizar:", err)
-    if (err.response?.status === 409) {
-      errorCodigo.value = err.response.data.error
-      mensaje.value = 'Por favor, corrija los campos marcados.'
-      mensajeTipo.value = 'danger'
-    } else {
-      mensaje.value = 'Error al actualizar participante. ' + (err.response?.data?.mensaje || err.message)
-      mensajeTipo.value = 'danger'
-    }
-  }
+  } catch (err) {
+    console.error("Error al actualizar:", err)
+    if (err.response?.status === 409) {
+      errorCodigo.value = err.response.data.error
+      mensaje.value = 'Por favor, corrija los campos marcados.'
+      mensajeTipo.value = 'danger'
+    } else {
+      mensaje.value = 'Error al actualizar participante. ' + (err.response?.data?.mensaje || err.message)
+      mensajeTipo.value = 'danger'
+    }
+  }
 }
 
 function volver() {
-  router.push('/adminDashboard')
+  router.push('/adminDashboard')
 }
 </script>
 

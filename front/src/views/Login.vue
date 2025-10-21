@@ -25,34 +25,39 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
+// --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
+const API_URL = 'https://tukuy-pacha-2.onrender.com';
+// --------------------------------------------------
+
 const correo = ref('');
 const password = ref('');
 const router = useRouter();
 
 async function iniciarSesion() {
-  try {
-    const response = await axios.post('http://localhost:3000/api/auth/login', {
-      correo: correo.value,
-      contraseña: password.value 
-    });
+  try {
+    // CAMBIO: Usar API_URL
+    const response = await axios.post(`${API_URL}/api/auth/login`, {
+      correo: correo.value,
+      contraseña: password.value 
+    });
 
-    const { token, usuario } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('usuario', JSON.stringify(usuario));
+    const { token, usuario } = response.data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('usuario', JSON.stringify(usuario));
 
-    // Redirigir según rol
-    if (usuario.rol === 'Administrador') {
-      router.push('/adminDashboard'); 
-    } else if (usuario.rol === 'Personal') {
-      router.push('/personalDashboard'); 
-    } else {
-      alert('Rol no reconocido');
-    }
+    // Redirigir según rol
+    if (usuario.rol === 'Administrador') {
+      router.push('/adminDashboard'); 
+    } else if (usuario.rol === 'Personal') {
+      router.push('/personalDashboard'); 
+    } else {
+      alert('Rol no reconocido');
+    }
 
-  } catch (error) {
-    alert('Credenciales incorrectas');
-    console.error(error);
-  }
+  } catch (error) {
+    alert('Credenciales incorrectas');
+    console.error(error);
+  }
 }
 </script>
 

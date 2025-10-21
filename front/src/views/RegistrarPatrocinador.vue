@@ -58,6 +58,10 @@ import axios from 'axios';
 import { VueTelInput } from 'vue-tel-input';
 import 'vue-tel-input/vue-tel-input.css';
 
+// --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
+const API_URL = 'https://tukuy-pacha-2.onrender.com';
+// --------------------------------------------------
+
 const router = useRouter();
 const telInputRef = ref(null);
 
@@ -69,46 +73,47 @@ const correo = ref('');
 const mensaje = ref('');
 
 const registrarPatrocinador = async () => {
-  if (!nombre.value) {
+  if (!nombre.value) {
     mensaje.value = 'El nombre es un campo obligatorio.';
     return;
   }
-  if (correo.value && (!correo.value.includes('@') || !correo.value.includes('.com'))) {
-    mensaje.value = 'El correo debe ser válido y terminar en .com';
-    return;
-  }
-  
-  if (celularCompleto.value) {
-    const phoneObject = telInputRef.value?.phoneObject;
-    if (phoneObject && !phoneObject.isValid) {
-      mensaje.value = 'El número de celular no es válido para el país seleccionado.';
-      return;
-    }
-  }
+  if (correo.value && (!correo.value.includes('@') || !correo.value.includes('.com'))) {
+    mensaje.value = 'El correo debe ser válido y terminar en .com';
+    return;
+  }
+  
+  if (celularCompleto.value) {
+    const phoneObject = telInputRef.value?.phoneObject;
+    if (phoneObject && !phoneObject.isValid) {
+      mensaje.value = 'El número de celular no es válido para el país seleccionado.';
+      return;
+    }
+  }
 
-  try {
-    const res = await axios.post('http://localhost:3000/api/patrocinadores', {
-      nombre: nombre.value,
-      apellido_paterno: apellido_paterno.value || null,
-      apellido_materno: apellido_materno.value || null,
-      celular: telInputRef.value?.phoneObject?.international || celularCompleto.value || null,
-      correo: correo.value || null,
-    });
-    mensaje.value = res.data.mensaje;
-    
-    nombre.value = '';
-    apellido_paterno.value = '';
-    apellido_materno.value = '';
-    celularCompleto.value = '';
-    correo.value = '';
-  } catch (error) {
-    mensaje.value = 'Error al registrar el patrocinador.';
-    console.error(error);
-  }
+  try {
+    // CAMBIO: Usar API_URL
+    const res = await axios.post(`${API_URL}/api/patrocinadores`, {
+      nombre: nombre.value,
+      apellido_paterno: apellido_paterno.value || null,
+      apellido_materno: apellido_materno.value || null,
+      celular: telInputRef.value?.phoneObject?.international || celularCompleto.value || null,
+      correo: correo.value || null,
+    });
+    mensaje.value = res.data.mensaje;
+    
+    nombre.value = '';
+    apellido_paterno.value = '';
+    apellido_materno.value = '';
+    celularCompleto.value = '';
+    correo.value = '';
+  } catch (error) {
+    mensaje.value = 'Error al registrar el patrocinador.';
+    console.error(error);
+  }
 };
 
 const cancelar = () => {
-  router.push('/adminDashboard');
+  router.push('/adminDashboard');
 };
 </script>
 
