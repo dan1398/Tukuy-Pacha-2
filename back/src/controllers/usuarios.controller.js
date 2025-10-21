@@ -1,5 +1,5 @@
 import pool from '../db.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs'; // <--- CORRECCIÓN CLAVE: Usar 'bcryptjs'
 import nodemailer from 'nodemailer';
 
 export const getUsuarios = async (req, res) => {
@@ -37,9 +37,12 @@ export const restablecerContrasena = async (req, res) => {
         }
         const userEmail = usuarioRows[0].correo;
         const contraseñaPlana = generarContraseñaAleatoria();
-        const sal = await bcrypt.genSalt(10);
-        const contraseñaHasheada = await bcrypt.hash(contraseñaPlana, sal);
+        
+        // CORRECCIÓN: Usar el factor de rounds directamente
+        const contraseñaHasheada = await bcrypt.hash(contraseñaPlana, 10); 
+        
         await pool.query('UPDATE Usuario SET contraseña = ? WHERE id_usuario = ?', [contraseñaHasheada, id]);
+        
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: userEmail,
@@ -62,8 +65,10 @@ export const createUsuario = async (req, res) => {
     const { nombre, apellido_paterno, apellido_materno, correo, rol } = req.body;
     try {
         const contraseñaPlana = generarContraseñaAleatoria();
-        const sal = await bcrypt.genSalt(10);
-        const contraseñaHasheada = await bcrypt.hash(contraseñaPlana, sal);
+        
+        // CORRECCIÓN: Usar el factor de rounds directamente
+        const contraseñaHasheada = await bcrypt.hash(contraseñaPlana, 10); 
+        
         const [result] = await pool.query(
             'INSERT INTO Usuario (nombre, apellido_paterno, apellido_materno, correo, contraseña, rol) VALUES (?, ?, ?, ?, ?, ?)',
             [nombre, apellido_paterno, apellido_materno, correo, contraseñaHasheada, rol]
@@ -118,7 +123,8 @@ export const updateContrasena = async (req, res) => {
     const { id } = req.params;
     const { nuevaContrasena } = req.body;
     try {
-        const hashedPassword = await bcrypt.hash(nuevaContrasena, 10);
+        // Usa el factor de rounds directamente, como ya estaba:
+        const hashedPassword = await bcrypt.hash(nuevaContrasena, 10); 
         await pool.query('UPDATE Usuario SET contraseña = ? WHERE id_usuario = ?', [hashedPassword, id]);
         res.json({ mensaje: 'Contraseña actualizada' });
     } catch (err) {
@@ -135,7 +141,8 @@ export const updateUsuario = async (req, res) => {
         const values = [nombre, apellido_paterno, apellido_materno, correo, rol];
 
         if (contraseña) {
-            const hashedPassword = await bcrypt.hash(contraseña, 10);
+            // Usa el factor de rounds directamente, como ya estaba:
+            const hashedPassword = await bcrypt.hash(contraseña, 10); 
             query += ', contraseña = ?';
             values.push(hashedPassword);
         }
