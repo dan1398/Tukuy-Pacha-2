@@ -1,39 +1,45 @@
 import app from '../src/app.js'
 import http from 'http'
 import dotenv from 'dotenv'
-// IMPORTA AQUÍ TU INSTANCIA DE SEQUELIZE
-// **REEMPLAZA** la ruta de abajo con la ubicación real de tu objeto 'sequelize'.
-import { sequelize } from '../ruta/real/a/sequelize.js'; 
+// 1. RUTA CORREGIDA: Importa tu pool de conexión desde '../src/db.js'
+import pool from '../src/db.js'; 
 
 dotenv.config()
 
 const port = process.env.PORT || 3000
 const server = http.createServer(app)
 
-// Función ASÍNCRONA para manejar la conexión a la DB y el inicio del servidor
-async function startServer() {
+// Función para verificar la conexión a la base de datos (SIN crear tablas)
+async function verifyDatabaseConnection() {
     try {
-        // --- 1. CONEXIÓN Y SINCRONIZACIÓN DE SEQUELIZE ---
-        
         console.log("Comprobando conexión a DB...");
-        // Verifica la conexión
-        await sequelize.authenticate(); 
-        console.log("Conexión a DB exitosa.");
-
-        // LÍNEA CRUCIAL: Crea las tablas (si no existen) basándose en los modelos
-        // Esto resolverá el error 'Table... doesn't exist'.
-        await sequelize.sync(); 
-        console.log("Modelos sincronizados. Tablas creadas/verificadas.");
         
-        // --- 2. INICIO DEL SERVIDOR ---
+        // Intenta obtener una conexión para verificar que el pool está activo y funcional
+        const connection = await pool.getConnection();
+        connection.release(); // Libera la conexión inmediatamente después de la prueba
+        
+        console.log("✅ Conexión a DB exitosa.");
+        return true;
+
+    } catch (error) {
+        // Muestra un error detallado si la conexión falla (útil para Render)
+        console.error("❌ Error FATAL al conectar la base de datos. Verifica la DATABASE_URL en Render:", error.message);
+        return false;
+    }
+}
+
+// Función ASÍNCRONA principal para el inicio del servidor
+async function startServer() {
+    const dbReady = await verifyDatabaseConnection();
+    
+    if (dbReady) {
+        // --- INICIO DEL SERVIDOR ---
         server.listen(port, () => {
             console.log(`🚀 Servidor corriendo en http://localhost:${port}`)
         })
-
-    } catch (error) {
-        console.error("❌ Error FATAL: No se pudo conectar la DB o iniciar el servidor:", error);
-        // Si hay un error, el servidor no se iniciará
-        process.exit(1); 
+    } else {
+        console.error("❌ El servidor no puede iniciar debido a un fallo en la base de datos.");
+        process.exit(1);
     }
 }
 
