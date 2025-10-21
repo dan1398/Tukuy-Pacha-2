@@ -18,8 +18,10 @@ dotenv.config()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// CORRECCIÓN: Usamos '..' para subir de 'src' a la raíz del proyecto y encontrar 'uploads'
-const uploadsPath = path.join(__dirname, '..', 'uploads') 
+// CORRECCIÓN CRÍTICA:
+// Basado en el error '/src/back/src/uploads/', necesitamos subir dos niveles (.., ..)
+// para ir de 'src/back/src/' a la raíz y luego acceder a 'uploads'.
+const uploadsPath = path.join(__dirname, '..', '..', 'uploads');
 
 // --- CÓDIGO AÑADIDO: CREACIÓN FORZADA DEL DIRECTORIO ---
 try {
@@ -32,6 +34,7 @@ try {
         console.log(`🌐 Directorio de subidas ya existe: ${uploadsPath}`);
     }
 } catch (error) {
+    // Este error es fundamental. Render debe mostrarlo en los logs.
     console.error('❌ Error fatal al intentar crear el directorio de subidas:', error);
 }
 // --------------------------------------------------------
@@ -49,7 +52,7 @@ app.use(cookieParser())
 
 // --- LÍNEA CLAVE PARA SERVIR ARCHIVOS ESTÁTICOS ---
 // Esto permite que el navegador acceda a archivos usando la URL /uploads/...
-app.use('/uploads', express.static(uploadsPath)) 
+app.use('/uploads', express.static(uploadsPath))
 // --------------------------------------------------------
 
 
