@@ -67,7 +67,7 @@
                 <div class="d-flex align-items-center">
                   <img
                     v-if="p.foto"
-                    :src="`https://tudominio-backend.com/uploads/${p.foto}`"
+                    :src="`http://localhost:3000/uploads/${p.foto}`"
                     alt="Foto del participante"
                     class="img-thumbnail me-3"
                     style="width: 50px; height: 50px; object-fit: cover;"
