@@ -19,7 +19,7 @@ export const getUsuarios = async (req, res) => {
 // Usamos el host y el puerto 587 con STARTTLS para evitar timeouts.
 // =======================================================
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com', // Servidor SMTP de Gmail
+    host: 'smtp.mailgun.org', // Servidor SMTP de Gmail
     port: 587,              // Puerto estándar para TLS/STARTTLS
     secure: false,          // 'false' para STARTTLS (puerto 587)
     auth: {
