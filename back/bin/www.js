@@ -2,9 +2,8 @@ import app from '../src/app.js'
 import http from 'http'
 import dotenv from 'dotenv'
 // IMPORTA AQUÍ TU INSTANCIA DE SEQUELIZE
-// Asegúrate de cambiar la ruta './db/sequelizeConfig.js' por la ruta real
-// donde inicializas y exportas tu objeto sequelize.
-import { sequelize } from '../ruta/a/tu/sequelizeConfig.js'; 
+// **REEMPLAZA** la ruta de abajo con la ubicación real de tu objeto 'sequelize'.
+import { sequelize } from '../ruta/real/a/sequelize.js'; 
 
 dotenv.config()
 
@@ -22,7 +21,7 @@ async function startServer() {
         console.log("Conexión a DB exitosa.");
 
         // LÍNEA CRUCIAL: Crea las tablas (si no existen) basándose en los modelos
-        // Si ya existen, no hace nada.
+        // Esto resolverá el error 'Table... doesn't exist'.
         await sequelize.sync(); 
         console.log("Modelos sincronizados. Tablas creadas/verificadas.");
         
@@ -40,13 +39,3 @@ async function startServer() {
 
 // Llamar a la función para iniciar todo
 startServer();
-```
-
----
-
-### Lo que Necesitas Confirmar
-
-El único paso que falta es asegurarte de que esta línea:
-
-```javascript
-import { sequelize } from '../ruta/a/tu/sequelizeConfig.js'; 
