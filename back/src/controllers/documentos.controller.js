@@ -114,6 +114,7 @@ export const updateDocumento = async (req, res) => {
             return res.status(404).json({ mensaje: 'Documento no encontrado para actualizar.' });
         }
         
+        // --- ⚠️ Aquí está el cambio crucial ⚠️ ---
         // Determinar el nuevo nombre de archivo y ruta, manteniendo el antiguo si no hay un nuevo archivo.
         let newFilename = oldFileResult[0].ruta_archivo;
         let newOriginalname = oldFileResult[0].nombre_archivo;

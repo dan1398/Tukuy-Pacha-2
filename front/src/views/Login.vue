@@ -26,7 +26,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 // --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
-const API_URL = 'https://tukuy-pacha-2.onrender.com';
+const API_URL = 'http://localhost:3000';
 // --------------------------------------------------
 
 const correo = ref('');
@@ -67,7 +67,7 @@ async function iniciarSesion() {
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 
-
+/* --- Variables de Color basadas EXACTAMENTE en Tukuypacha.com --- */
 :root {
   --tukuypacha-accent: #f05a30; /* Color principal para títulos y algunos textos */
   --tukuypacha-button-bg: #e76124; /* Color de fondo para el botón principal */
@@ -88,7 +88,8 @@ body {
 }
 
 .tukuypacha-login-wrapper {
- 
+  /* Mantener este bloque, si es necesario quitar el comentario anidado: */
+  /* background-color: rgba(0, 0, 0, 0.05);  */ /* Puedes descomentarlo si quieres un ligero overlay */
 }
 
 /* --- Tarjeta de Inicio de Sesión --- */
@@ -131,16 +132,16 @@ body {
   color: var(--tukuypacha-dark-text) !important;
   box-shadow: inset 0 1px 2px rgba(0,0,0,.075) !important; 
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
-  -webkit-appearance: none !important; 
+  -webkit-appearance: none !important; /* Eliminar estilos predeterminados del navegador */
   -moz-appearance: none !important;
   appearance: none !important;
 }
 
-
+/* Esto es CRÍTICO para el foco y el contorno azul de Bootstrap */
 .tukuypacha-input:focus {
-  border-color: var(--tukuypacha-accent) !important; 
-  outline: 0 !important; 
-  box-shadow: 0 0 0 0.25rem rgba(240, 90, 48, 0.25) !important; 
+  border-color: var(--tukuypacha-accent) !important; /* Color de borde de tu marca */
+  outline: 0 !important; /* ¡Muy importante! Elimina el contorno azul por defecto */
+  box-shadow: 0 0 0 0.25rem rgba(240, 90, 48, 0.25) !important; /* Sombra de enfoque con transparencia del color accent */
 }
 
 /* --- Botón de Ingresar --- */

@@ -44,7 +44,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 // --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
-const API_URL = 'https://tukuy-pacha-2.onrender.com';
+const API_URL = 'http://localhost:3000';
 // --------------------------------------------------
 
 const router = useRouter()

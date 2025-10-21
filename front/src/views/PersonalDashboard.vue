@@ -156,7 +156,7 @@ import logo from '../images/logo-top2.png';
 import html2pdf from 'html2pdf.js';
 
 // --- DEFINICIÓN DE LA URL DE LA API DE RENDER ---
-const API_URL = 'https://tukuy-pacha-2.onrender.com';
+const API_URL = 'http://localhost:3000';
 // --------------------------------------------------
 
 const router = useRouter()
@@ -279,7 +279,7 @@ const descargarPDF = () => {
 body {
   font-family: 'Poppins', sans-serif;
   color: var(--tukuypacha-dark-text);
-  background-color: var(--tukuypacha-bg-main); 
+  background-color: var(--tukuypacha-bg-main); /* Fondo para todo el cuerpo */
 }
 
 .admin-dashboard-wrapper {
@@ -295,6 +295,7 @@ body {
   border-right: 1px solid var(--tukuypacha-border-color);
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
   padding: 2rem !important;
+  /* Ya tiene d-flex flex-column del template, no es necesario aquí */
 }
 
 .admin-logo {
@@ -304,27 +305,28 @@ body {
 }
 
 .sidebar-profile-info {
-  margin-bottom: 2rem !important; 
+  margin-bottom: 2rem !important; /* Ajustado para más espacio */
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--tukuypacha-border-color);
-  text-align: center; 
+  text-align: center; /* Centrar el texto del perfil */
 }
 
-
+/* Nuevos estilos para el nombre de usuario y el rol */
 .sidebar-profile-info .user-name {
-  font-size: 1.3rem; 
-  font-weight: 700; 
-  color: var(--tukuypacha-accent); 
-  margin-bottom: 0.2rem; 
+  font-size: 1.3rem; /* Tamaño más grande para el nombre */
+  font-weight: 700; /* Más audaz */
+  color: var(--tukuypacha-accent); /* Color principal de Tukuypacha */
+  margin-bottom: 0.2rem; /* Espacio entre nombre y rol */
 }
 
 .sidebar-profile-info .user-role {
-  font-size: 0.95rem; 
+  font-size: 0.95rem; /* Tamaño ligeramente más grande que antes */
   color: var(--tukuypacha-light-text);
 }
 
 .sidebar-buttons {
-
+  /* Este div es el flex-grow-1 para empujar el botón de cerrar sesión hacia abajo */
+  /* No se necesita CSS adicional aquí si ya tiene flex-grow-1 y d-flex flex-column */
 }
 
 .btn-tukuypacha-sidebar {
@@ -359,7 +361,7 @@ body {
   border-color: #bd2130 !important;
 }
 
-/* --- Contenido Principal --- */
+/* --- Contenido Principal (el resto sigue igual) --- */
 .admin-main-content {
   background-color: var(--tukuypacha-bg-main);
   padding: 2.5rem !important;
@@ -511,7 +513,7 @@ body {
   color: var(--tukuypacha-dark-text);
 }
 
-
+/* --- Responsive adjustments (directamente de tu AdminDashboard.vue) --- */
 @media (max-width: 768px) {
   .admin-dashboard-wrapper {
     flex-direction: column;
@@ -524,7 +526,7 @@ body {
     border-bottom: 1px solid var(--tukuypacha-border-color);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     padding: 1rem !important;
-    flex-direction: column; 
+    flex-direction: column; /* Asegura que los elementos se apilen */
     align-items: center;
   }
 
@@ -541,18 +543,18 @@ body {
     border-bottom: none;
   }
 
- 
+  /* Ajuste para los botones en móviles dentro de la sidebar */
   .sidebar-buttons {
-      width: 80%; 
-      align-items: center; 
+      width: 80%; /* Asegura que ocupen un buen ancho en móvil */
+      align-items: center; /* Centra los botones si el div es más ancho */
   }
   .admin-sidebar .btn-tukuypacha-sidebar,
   .admin-sidebar .btn-tukuypacha-danger {
-    width: 100% !important; 
-    margin-bottom: 0.5rem !important; 
+    width: 100% !important; /* Ocupan todo el ancho del contenedor sidebar-buttons */
+    margin-bottom: 0.5rem !important; /* Espacio entre ellos */
   }
   .admin-sidebar .btn-tukuypacha-danger {
-      margin-top: 0.5rem !important; 
+      margin-top: 0.5rem !important; /* Margen para el botón de cerrar sesión */
   }
 
   .admin-main-content {
@@ -600,10 +602,10 @@ body {
   }
 }
 
-
+/* Estilos para pantallas aún más pequeñas (ej., teléfonos muy estrechos) */
 @media (max-width: 480px) {
   .sidebar-buttons {
-      width: 95%; 
+      width: 95%; /* Ocupa casi todo el ancho en móviles muy pequeños */
   }
   .admin-sidebar .btn-tukuypacha-sidebar,
   .admin-sidebar .btn-tukuypacha-danger {
