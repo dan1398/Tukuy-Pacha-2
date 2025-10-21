@@ -12,7 +12,7 @@ const __dirname = dirname(__filename)
 // la carpeta 'uploads' está en el nivel superior (/src/back/uploads), 
 // necesitamos subir un nivel (..) y luego buscar 'uploads'.
 
-const uploadDir = path.join(__dirname, '..', '..', 'uploads') 
+const uploadDir = path.join(__dirname, '..', 'uploads') 
 
 // Para fines de depuración: imprime la ruta donde Multer intentará guardar
 console.log('Multer intentará guardar en (upload.js):', uploadDir);
