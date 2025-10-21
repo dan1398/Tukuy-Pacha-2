@@ -778,20 +778,31 @@ const cancelarEdicion = (usuarioEnTabla) => {
 };
 
 const eliminarUsuarioLocal = async (id) => {
+  // 1. Cuadro de diálogo de confirmación
+  if (!confirm('¿Estás seguro de que deseas eliminar a este usuario? Esta acción es irreversible.')) {
+    console.log('Eliminación de usuario cancelada por el usuario.');
+    return; // Detiene la ejecución si el usuario cancela
+  }
+
   console.log('Solicitud de eliminación de usuario para el ID:', id);
+  
   try {
     // CAMBIO: Usar API_URL
     await axios.delete(`${API_URL}/api/usuarios/${id}`)
     usuarios.value = usuarios.value.filter(u => u.id_usuario !== id)
     if (editandoId.value === id) editandoId.value = null
     console.log('Usuario eliminado de la base de datos')
+    
     // Lógica para retroceder página si se elimina el último elemento
+    // La propiedad computada `paginatedUsers` (que depende de `usuariosFiltrados`) se actualiza
+    // automáticamente. Esta condición cubre el caso en que la página actual queda vacía.
     if (paginatedUsers.value.length === 0 && currentPage.value > 1) {
       currentPage.value--;
     }
   } catch (err) {
     console.error('Error al eliminar usuario:', err)
-    console.error('No se pudo eliminar el usuario');
+    // Mostrar mensaje de error al usuario, si es necesario.
+    alert('No se pudo eliminar el usuario. Por favor, intente de nuevo.');
   }
 }
 
@@ -912,20 +923,36 @@ const onPatrocinadorCelularBlur = (id) => {
 };
 
 const eliminarPatrocinador = async (id) => {
+  // 1. Cuadro de diálogo de confirmación
+  if (!confirm('¿Estás seguro de que deseas eliminar a este patrocinador? Esta acción es irreversible.')) {
+    console.log('Eliminación de patrocinador cancelada por el usuario.');
+    return; // Detiene la ejecución si el usuario cancela
+  }
+
   try {
+    console.log('Solicitud de eliminación de patrocinador para el ID:', id);
+    
     // CAMBIO: Usar API_URL
     await axios.delete(`${API_URL}/api/patrocinadores/${id}`);
     patrocinadores.value = patrocinadores.value.filter(p => p.id_patrocinador !== id);
     if (editandoPatrocinadorId.value === id) editandoPatrocinadorId.value = null;
     console.log('Patrocinador eliminado de la base de datos');
-    // Asegurarse de que si se elimina el último elemento de la página, retrocedemos una página
-    // IMPORTANTE: USAR LA LISTA FILTRADA PARA LA CONDICIÓN DE RETROCESO
+    
+    // Lógica para retroceder página (mejorada para que la condición se evalúe después de actualizar la lista `patrocinadores.value`)
+    // Si la lista FILTRADA ahora es un múltiplo exacto del tamaño de página (después de la eliminación)
+    // Y no estamos en la primera página, se retrocede.
     if (patrocinadoresFiltrados.value.length % patrocinadorPageSize.value === 0 && patrocinadoresFiltrados.value.length > 0) {
       currentPatrocinadorPage.value--;
     }
+    // Caso especial: Si la lista filtrada queda vacía y estábamos en una página > 1, también retrocede a la última página no vacía (aunque en este caso queda 0 páginas).
+    else if (patrocinadoresFiltrados.value.length === 0 && currentPatrocinadorPage.value > 1) {
+      currentPatrocinadorPage.value--;
+    }
+
   } catch (err) {
     console.error('Error al eliminar patrocinador:', err);
-    console.error('No se pudo eliminar el patrocinador');
+    // Mostrar mensaje de error al usuario, si es necesario.
+    alert('No se pudo eliminar el patrocinador. Por favor, intente de nuevo.'); 
   }
 };
 </script>
