@@ -27,8 +27,8 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS
     },
     // Añadir timeout de conexión para depuración (opcional, pero útil)
-    connectionTimeout: 5000, // 5 segundos
-    greetingTimeout: 5000,   // 5 segundos
+    connectionTimeout: 15000, // 5 segundos
+    greetingTimeout: 15000,   // 5 segundos
 });
 
 /**
