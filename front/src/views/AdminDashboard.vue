@@ -20,7 +20,44 @@
 
     <div class="flex-grow-1 p-4 admin-main-content">
       <h1 class="mb-4 admin-main-title">Panel de Administración</h1>
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm admin-card h-100">
+                <div class="card-header admin-card-header">
+                    <h5 class="mb-0">📊 Documentos por Tipo</h5>
+                </div>
+                <div class="card-body d-flex justify-content-center align-items-center p-2">
+                    <div style="width: 100%; max-width: 200px;">
+                        <canvas id="documentosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm admin-card h-100">
+                <div class="card-header admin-card-header">
+                    <h5 class="mb-0">👥 Participantes</h5>
+                </div>
+                <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+                    <h2 class="display-4 fw-bold text-primary mb-0">{{ totalParticipantesDashboard }}</h2>
+                    <p class="text-muted small mt-1">Total Registrados</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm admin-card h-100">
+                <div class="card-header admin-card-header">
+                    <h5 class="mb-0">🤝 Patrocinadores</h5>
+                </div>
+                <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+                    <h2 class="display-4 fw-bold text-success mb-0">{{ totalPatrocinadoresDashboard }}</h2>
+                    <p class="text-muted small mt-1">Total Registrados</p>
+                </div>
+            </div>
+        </div>
+      </div>
       <div class="card shadow-sm mb-4 admin-card">
         <div class="card-header admin-card-header">
           <h5>Buscar Participante</h5>
@@ -436,9 +473,12 @@
 </template>
 
 <script setup>  
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, nextTick } from 'vue' // 🟢 ¡nextTick importado!
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+// 🟢 ¡Importar Chart.js!
+import Chart from 'chart.js/auto'; 
+// --------------------------------------------------
 import logo from '../images/logo-top2.png';
 import { VueTelInput } from 'vue-tel-input';
 import 'vue-tel-input/vue-tel-input.css';
@@ -469,6 +509,23 @@ const patrocinadorValidacionEstado = ref({});
 let searchTimeout = null;
 
 const cardParticipante = ref(null);
+
+// ===============================================
+// 🟢 DECLARACIÓN DE VARIABLES DEL DASHBOARD (Faltaba)
+// ===============================================
+
+const totalParticipantesDashboard = ref(0);
+const totalPatrocinadoresDashboard = ref(0);
+// Para almacenar el conteo de tipos de documentos (para el gráfico)
+const conteoDocumentos = ref({
+    pdf: 0,
+    word: 0,
+    excel: 0,
+    imagen: 0,
+    otros: 0
+});
+// Instancia de Chart.js para poder destruirla y redibujarla
+let documentosChartInstance = null;
 
 // ===============================================
 // === LÓGICA DE BÚSQUEDA Y PAGINACIÓN DE USUARIOS
@@ -602,7 +659,7 @@ const totalPatrocinadorPages = computed(() => {
 const paginatedPatrocinadores = computed(() => {
     if (!patrocinadoresFiltrados.value) return [];
 
-    // Ajustar la página actual si el filtro reduce los resultados
+    // Ajustar la página actual si el filtro reduce los resultados
     const totalItems = patrocinadoresFiltrados.value.length;
     if (currentPatrocinadorPage.value > totalPatrocinadorPages.value && totalPatrocinadorPages.value > 0) {
         currentPatrocinadorPage.value = totalPatrocinadorPages.value;
@@ -615,7 +672,7 @@ const paginatedPatrocinadores = computed(() => {
     const start = (currentPatrocinadorPage.value - 1) * patrocinadorPageSize.value;
     const end = start + patrocinadorPageSize.value;
     
-    // Devolver el segmento de la lista FILTRADA
+    // Devolver el segmento de la lista FILTRADA
     return patrocinadoresFiltrados.value.slice(start, end);
 });
 
@@ -644,12 +701,16 @@ const prevPatrocinadorPage = () => {
 // ===============================================
 
 onMounted(() => {
+  // Lógica de sesión (mantener)
   const userData = localStorage.getItem('usuario')
   if (!userData) {
     router.push('/login')
   } else {
     usuario.value = JSON.parse(userData)
   }
+  
+  // 🟢 ¡LLAMADA CLAVE PARA CARGAR EL DASHBOARD!
+  cargarEstadisticas(); 
 })
 
 watch(mostrarUsuarios, async (value) => {
@@ -681,7 +742,7 @@ watch(mostrarPatrocinadores, async (value) => {
       patrocinadores.value = res.data;
       // Reiniciar la paginación de patrocinadores al cargar nuevos datos
       currentPatrocinadorPage.value = 1;
-      // Opcional: Limpiar el campo de búsqueda al abrir el modal
+      // Opcional: Limpiar el campo de búsqueda al abrir el modal
       busquedaPatrocinador.value = '';
     } catch (err) {
       console.error('Error al cargar patrocinadores:', err)
@@ -955,6 +1016,131 @@ const eliminarPatrocinador = async (id) => {
     alert('No se pudo eliminar el patrocinador. Por favor, intente de nuevo.'); 
   }
 };
+
+// ===============================================
+// 🟢 FUNCIONES DEL DASHBOARD (CORREGIDAS Y FINALIZADAS)
+// ===============================================
+const cargarEstadisticas = async () => {
+    try {
+        console.log('Cargando estadísticas del Dashboard desde el API...');
+        
+        // --- LLAMADA REAL AL ENDPOINT ---
+        const res = await axios.get(`${API_URL}/api/dashboard/stats`);
+        const data = res.data; 
+        
+        // 1. Asignar contadores a las variables reactivas
+        totalParticipantesDashboard.value = data.totalParticipantes;
+        totalPatrocinadoresDashboard.value = data.totalPatrocinadores;
+        
+        // 2. Asignar conteo de documentos
+        conteoDocumentos.value = {
+            pdf: data.documentos.pdf,
+            word: data.documentos.word,
+            excel: data.documentos.excel,
+            imagen: data.documentos.imagen,
+            otros: data.documentos.otros
+        };
+        
+        console.log('Estadísticas cargadas:', data);
+
+        // 3. Esperar que Vue actualice el DOM y luego dibujar el gráfico
+        await nextTick();
+        crearGraficoDocumentos();
+
+    } catch (err) {
+        console.error('❌ Error al cargar estadísticas del Dashboard:', err);
+    }
+};
+
+const crearGraficoDocumentos = () => {
+    const ctx = document.getElementById('documentosChart');
+
+    if (!ctx) {
+        console.warn('Canvas para el gráfico no encontrado.');
+        return; 
+    } 
+
+    // Destruir la instancia anterior si existe
+    if (documentosChartInstance) {
+        documentosChartInstance.destroy();
+    }
+
+    const data = conteoDocumentos.value;
+    
+    // Filtramos los datos que sean mayores a 0
+    const labels = [];
+    const counts = [];
+    const backgroundColors = [];
+    
+    // Definición de colores
+    const colorMap = {
+        pdf: { label: 'PDF', color: '#dc3545' },     // Rojo
+        word: { label: 'Word', color: '#007bff' },    // Azul
+        excel: { label: 'Excel', color: '#28a745' },   // Verde
+        imagen: { label: 'Imágenes', color: '#ffc107' }, // Amarillo
+        otros: { label: 'Otros', color: '#6c757d' }    // Gris
+    };
+    
+    for (const key in data) {
+        if (data[key] > 0) {
+            labels.push(colorMap[key].label);
+            counts.push(data[key]);
+            backgroundColors.push(colorMap[key].color);
+        }
+    }
+
+    // Si no hay datos, no dibujamos el gráfico
+    if (counts.length === 0) {
+        // Puedes optar por mostrar un mensaje en el canvas si no hay datos
+        return; 
+    }
+
+    const chartData = {
+        labels: labels,
+        datasets: [{
+            data: counts,
+            backgroundColor: backgroundColors,
+            hoverOffset: 8,
+            borderWidth: 1
+        }]
+    };
+
+    // Crear la nueva instancia del gráfico
+    documentosChartInstance = new Chart(ctx, {
+        type: 'doughnut', 
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom', 
+                    labels: {
+                        boxWidth: 15,
+                        padding: 10
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                // Muestra el valor real del conteo
+                                label += context.parsed;
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
+
+// ... export default / Fin de script ...
 </script>
 
 <style>
