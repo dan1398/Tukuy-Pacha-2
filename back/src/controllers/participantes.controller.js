@@ -23,7 +23,7 @@ export const buscarParticipantes = async (req, res) => {
     }
 
     const terminoBusqueda = `%${termino}%`;
-
+    const terminoFechaBusqueda = `%${termino}%`;
     try {
         // CORRECCIÓN CLAVE: El string SQL ha sido limpiado para eliminar los caracteres
         // de espacio no estándar que causaban el error de sintaxis (ER_PARSE_ERROR).
@@ -57,6 +57,7 @@ export const buscarParticipantes = async (req, res) => {
                 OR p.apellido_paterno LIKE ?
                 OR p.apellido_materno LIKE ?
                 OR p.CI LIKE ?
+                OR p.fecha_nacimiento LIKE ?
                 OR p.direccion LIKE ?
                 OR p.celular LIKE ?
                 OR pat.nombre LIKE ?;
@@ -68,6 +69,7 @@ export const buscarParticipantes = async (req, res) => {
             terminoBusqueda, // p.apellido_paterno
             terminoBusqueda, // p.apellido_materno
             terminoBusqueda, // p.CI
+            terminoFechaBusqueda,
             terminoBusqueda, // p.direccion
             terminoBusqueda, // p.celular
             terminoBusqueda, // pat.nombre
